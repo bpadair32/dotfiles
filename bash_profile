@@ -38,7 +38,7 @@ alias myip="curl ip.appspot.com"
 alias flushDNS="dscacheutil -flushcache"
 alias finderShowHidden='defaults write com.apple.finder ShowAllFiles TRUE'
 alias finderHideHidden='defaults write com.apple.finder ShowAllFiles FALSE'
-
+alias cmp='ssh -i ~/.ssh/brad_cmp.pem centos@52.205.78.172'
 #####Useful functions#####
 #Simple blowfish encryption
 function blow()
