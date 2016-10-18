@@ -1,0 +1,124 @@
+#####Set Path#####
+export PATH="$PATH:/usr/local/bin"
+
+#####Set sane defaults#####
+export BLOCKSIZE=1k
+export GREP_OPTIONS='--color=auto'
+shopt -s histappend
+HISTFILESIZE=1000000
+HISTSIZE=1000000
+HISTCONTROL=ignoreboth
+HISTIGNORE='ls:bg:fg:history'
+PROMPT_COMMAND='history -a'
+
+#####Env variables needed for using ansible with AWS
+export AWS_ACCESS_KEY_ID='AKIAJQGR6THYMEHH247Q'
+export AWS_SECRET_ACCESS_KEY='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'
+
+#####Color terminal#####
+export CLICOLOR=1
+export LSCOLORS=ExFxBxDxCxegedabagacad
+
+#####Aliases#####
+alias ls="ls -la"
+alias cls="clear"
+alias lsr="ls -lart"
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias ~="cd ~"
+alias countFiles="echo $(ls -1 | wc -l)"
+alias make1mb="mkfile 1m ./1MB.dat"
+alias make5mb="mkfile 5m ./5MB.dat"
+alias make10mb="mkfile 10m ./10MB.dat"
+alias myip="curl ip.appspot.com"
+alias editProf="vim ~/.bash_profile"
+alias reload="source ~/.bash_profile"
+
+#####Useful functions#####
+#Simple command correction
+#Simple blowfish encryption
+function blow()
+{
+    [ -z "$1" ] && echo 'Encrypt: blow FILE' && return 1
+    openssl bf-cbc -salt -in "$1" -out "$1.bf"
+}
+function fish()
+{
+    test -z "$1" -o -z "$2" && echo \
+        'Decrypt: fish INFILE OUTFILE' && return 1
+    openssl bf-cbc -d -salt -in "$1" -out "$2"
+}
+
+#Extract files
+extract () {
+        if [ -f $1 ] ; then
+          case $1 in
+            *.tar.bz2)   tar xjf $1     ;;
+            *.tar.gz)    tar xzf $1     ;;
+            *.bz2)       bunzip2 $1     ;;
+            *.rar)       unrar e $1     ;;
+            *.gz)        gunzip $1      ;;
+            *.tar)       tar xf $1      ;;
+            *.tbz2)      tar xjf $1     ;;
+            *.tgz)       tar xzf $1     ;;
+            *.zip)       unzip $1       ;;
+            *.Z)         uncompress $1  ;;
+            *.7z)        7z x $1        ;;
+            *)     echo "'$1' cannot be extracted via extract()" ;;
+             esac
+         else
+             echo "'$1' is not a valid file"
+         fi
+    }
+
+
+#####Set Prompt#####
+# get current branch in git repo
+function parse_git_branch() {
+    BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
+    if [ ! "${BRANCH}" == "" ]
+    then
+        STAT=`parse_git_dirty`
+        echo "[${BRANCH}${STAT}]"
+    else
+        echo ""
+    fi
+}
+
+# get current status of git repo
+function parse_git_dirty {
+    status=`git status 2>&1 | tee`
+    dirty=`echo -n "${status}" 2> /dev/null | grep "modified:" &> /dev/null; echo "$?"`
+    untracked=`echo -n "${status}" 2> /dev/null | grep "Untracked files" &> /dev/null; echo "$?"`
+    ahead=`echo -n "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
+    newfile=`echo -n "${status}" 2> /dev/null | grep "new file:" &> /dev/null; echo "$?"`
+    renamed=`echo -n "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; echo "$?"`
+    deleted=`echo -n "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; echo "$?"`
+    bits=''
+    if [ "${renamed}" == "0" ]; then
+        bits=">${bits}"
+    fi
+    if [ "${ahead}" == "0" ]; then
+        bits="*${bits}"
+    fi
+    if [ "${newfile}" == "0" ]; then
+        bits="+${bits}"
+    fi
+    if [ "${untracked}" == "0" ]; then
+        bits="?${bits}"
+    fi
+    if [ "${deleted}" == "0" ]; then
+        bits="x${bits}"
+    fi
+    if [ "${dirty}" == "0" ]; then
+        bits="!${bits}"
+    fi
+    if [ ! "${bits}" == "" ]; then
+        echo " ${bits}"
+    else
+        echo ""
+    fi
+}
+
+export PS1="\e[0;36m\u@\e[m\e[0;32m\h:\e[m\e[0;34m\W:\e[m\`parse_git_branch\` "
