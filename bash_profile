@@ -47,6 +47,7 @@ alias brewup='brew update; brew upgrade; brew prune; brew cleanup; brew doctor'
 alias editProf="vim ~/.bash_profile"
 alias reload="source ~/.bash_profile"
 alias speedtest="speedtest-cli"
+alias aws="ssh brad@jump.iqity.org"
 
 #####Useful functions#####
 #Simple command correction
