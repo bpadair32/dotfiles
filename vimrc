@@ -1,0 +1,12 @@
+set number
+set numberwidth=2
+set cul
+set ignorecase
+set autoindent
+set tabstop=2
+set expandtab
+set smartindent
+set nowrap
+set t_Co=256
+syntax enable
+colorscheme molokai
