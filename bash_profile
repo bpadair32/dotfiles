@@ -1,6 +1,5 @@
 #####Set Path#####
-export PATH="$PATH:/usr/local/bin"
-
+export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH:/usr/local/bin"
 #####Set sane defaults#####
 export BLOCKSIZE=1k
 export GREP_OPTIONS='--color=auto'
@@ -10,7 +9,7 @@ HISTSIZE=1000000
 HISTCONTROL=ignoreboth
 HISTIGNORE='ls:bg:fg:history'
 PROMPT_COMMAND='history -a'
-
+archey
 #####Env variables needed for using ansible with AWS
 export AWS_ACCESS_KEY_ID='AKIAJQGR6THYMEHH247Q'
 export AWS_SECRET_ACCESS_KEY='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'
@@ -50,6 +49,7 @@ alias speedtest="speedtest-cli"
 alias jump="ssh brad@jump.iqity.org"
 alias cleanTemp="rm -rf ~/Documents/temp/*
 "
+alias rm="trash"
 #####Useful functions#####
 #Simple command correction
 eval "$(thefuck --alias)"
