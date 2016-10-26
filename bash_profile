@@ -19,6 +19,8 @@ export AWS_SECRET_ACCESS_KEY='0XfFivcosm+J9srWntz/oflMKyNSPJg8ebNtIYzu'
 export CLICOLOR=1
 export LSCOLORS="ExGxBxDxCxEgEdxbxgxcxd"
 
+#####Some other helpful exports
+export EDITOR="/usr/local/bin/vim"
 #####Aliases#####
 alias ls="ls -la --color"
 alias nag="ssh root@10.0.50.206"
@@ -53,6 +55,8 @@ alias cleanTemp="rm -rf ~/Documents/temp/*"
 alias rm="trash"
 alias scanWifi="airport -s"
 alias lock="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
+alias mkdir="mkdir -pv"
+alias netCons='lsof -i'
 
 #####Useful functions#####
 #Simple command correction
