@@ -17,10 +17,10 @@ export AWS_SECRET_ACCESS_KEY='0XfFivcosm+J9srWntz/oflMKyNSPJg8ebNtIYzu'
 
 #####Color terminal#####
 export CLICOLOR=1
-export LSCOLORS=ExFxBxDxCxegedabagacad
+export LSCOLORS="ExGxBxDxCxEgEdxbxgxcxd"
 
 #####Aliases#####
-alias ls="ls -la"
+alias ls="ls -la --color"
 alias nag="ssh root@10.0.50.206"
 alias cls="clear"
 alias scj="ssh root@10.3.1.2"
