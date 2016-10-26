@@ -26,10 +26,11 @@ alias ls="ls -la --color"
 alias nag="ssh root@10.0.50.206"
 alias cls="clear"
 alias scj="ssh root@10.3.1.2"
-alias lsr="ls -lart"
+alias lsr="ls -lart --color" 
 alias ..="cd .."
 alias ...="cd ../.."
 alias ....="cd ../../.."
+alias .....="cd ../../../.."
 alias ~="cd ~"
 alias cic="set completion-ignore-case On"
 alias countFiles="echo $(ls -1 | wc -l)"
@@ -46,6 +47,7 @@ alias vpn-sh='~/Documents/scripts/bash/shvpn.sh'
 alias vpn-dis='~/Documents/scripts/bash/discon.sh'
 alias docs="cd ~/Documents"
 alias temp="cd ~/Documents/temp"
+alias projects="cd ~/Documents/Projects"
 alias brewup='brew update; brew upgrade; brew prune; brew cleanup; brew doctor'
 alias editProf="vim ~/.bash_profile"
 alias reload="source ~/.bash_profile"
@@ -57,7 +59,7 @@ alias scanWifi="airport -s"
 alias lock="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
 alias mkdir="mkdir -pv"
 alias netCons='lsof -i'
-
+alias dotFiles="cd ~/Documents/dotfiles"
 #####Useful functions#####
 #Simple command correction
 eval "$(thefuck --alias)"
