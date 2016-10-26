@@ -9,6 +9,7 @@ HISTSIZE=1000000
 HISTCONTROL=ignoreboth
 HISTIGNORE='ls:bg:fg:history'
 PROMPT_COMMAND='history -a'
+#####Show Archey#####
 archey
 #####Env variables needed for using ansible with AWS
 export AWS_ACCESS_KEY_ID='AKIAJQGR6THYMEHH247Q'
@@ -33,7 +34,7 @@ alias countFiles="echo $(ls -1 | wc -l)"
 alias make1mb="mkfile 1m ./1MB.dat"
 alias make5mb="mkfile 5m ./5MB.dat"
 alias make10mb="mkfile 10m ./10MB.dat"
-alias myip="curl ip.appspot.com"
+alias myip="dig +short myip.opendns.com @resolver1.opendns.com"
 alias flushDNS="dscacheutil -flushcache"
 alias finderShowHidden='defaults write com.apple.finder ShowAllFiles TRUE'
 alias finderHideHidden='defaults write com.apple.finder ShowAllFiles FALSE'
@@ -42,14 +43,17 @@ alias vpn-colo='~/Documents/scripts/bash/colo.sh'
 alias vpn-sh='~/Documents/scripts/bash/shvpn.sh'
 alias vpn-dis='~/Documents/scripts/bash/discon.sh'
 alias docs="cd ~/Documents"
+alias temp="cd ~/Documents/temp"
 alias brewup='brew update; brew upgrade; brew prune; brew cleanup; brew doctor'
 alias editProf="vim ~/.bash_profile"
 alias reload="source ~/.bash_profile"
 alias speedtest="speedtest-cli"
 alias jump="ssh brad@jump.iqity.org"
-alias cleanTemp="rm -rf ~/Documents/temp/*
-"
+alias cleanTemp="rm -rf ~/Documents/temp/*"
 alias rm="trash"
+alias scanWifi="airport -s"
+alias lock="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
+
 #####Useful functions#####
 #Simple command correction
 eval "$(thefuck --alias)"
