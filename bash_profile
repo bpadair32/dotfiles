@@ -14,7 +14,6 @@ archey
 #####Env variables needed for using ansible with AWS
 export AWS_ACCESS_KEY_ID='AKIAJQGR6THYMEHH247Q'
 export AWS_SECRET_ACCESS_KEY='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'
-
 #####Color terminal#####
 export CLICOLOR=1
 export LSCOLORS="ExGxBxDxCxEgEdxbxgxcxd"
