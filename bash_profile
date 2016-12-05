@@ -60,6 +60,10 @@ alias lock="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resourc
 alias mkdir="mkdir -pv"
 alias netCons='lsof -i'
 alias dotFiles="cd ~/Documents/dotfiles"
+alias yoda="ssh -i ~/.ssh/adair-tech.pem brad@52.15.95.69"
+alias scripts="cd ~/Documents/scripts"
+alias adair="cd ~/Documents/Personal/Projects/adair.tech"
+alias screen="tmux"
 #####Useful functions#####
 #Simple command correction
 eval "$(thefuck --alias)"
@@ -147,4 +151,4 @@ function parse_git_dirty {
     fi
 }
 
-export PS1="\e[0;36m\u@\e[m\e[0;32m\h:\e[m\e[0;34m\W:\e[m\`parse_git_branch\` "
+export PS1="\[\e[0;36m\]\u@\[\e[m\e[0;32m\]\h:\[\e[m\e[0;34m\]\W:\[\e[m\`parse_git_branch\`\] "
