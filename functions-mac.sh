@@ -1,4 +1,8 @@
+#####Functions that are specific to Mac
+
+#Allow "The Fuck" to work. This is command correction
 eval "$(thefuck --alias)"
+#Determine what branch you are on if directory is part of Git repo
 function parse_git_branch() {
     BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
     if [ ! "${BRANCH}" == "" ]
@@ -9,8 +13,7 @@ function parse_git_branch() {
         echo ""
     fi
 }
-
-# get current status of git repo
+#Determine the current status of the Git repo if in one
 function parse_git_dirty {
     status=`git status 2>&1 | tee`
     dirty=`echo -n "${status}" 2> /dev/null | grep "modified:" &> /dev/null; echo "$?"`

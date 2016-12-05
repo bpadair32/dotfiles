@@ -1,8 +1,12 @@
+#####Functions that work on both Mac and Linux
+
+#Simple file encryption with Blowfish
 function blow()
 {
     [ -z "$1" ] && echo 'Encrypt: blow FILE' && return 1
     openssl bf-cbc -salt -in "$1" -out "$1.bf"
 }
+#Simple file decryption with Blowfish
 function fish()
 {
     test -z "$1" -o -z "$2" && echo \
