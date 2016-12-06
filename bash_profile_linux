@@ -1,4 +1,4 @@
-dotFilesDir="/home/brad/dotfiles/"
+dotFilesDir="/home/directory.iqity.org/brad/dotfiles"
 
 #####Import default settings
 source $dotFilesDir/defaults-general.sh
