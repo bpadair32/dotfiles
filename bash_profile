@@ -14,8 +14,8 @@ export LSCOLORS="ExGxBxDxCxEgEdxbxgxcxd"
 export EDITOR="/usr/local/bin/vim"
 
 #Set PATH
-export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH:/usr/local/bin"
-
+export CATALINA_HOME="/usr/local/opt/tomcat@8.0/libexec"
+export PATH="/usr/local/opt/coreutils/libexec/gnubin:/usr/local/sbin:$CATALINA_HOME/bin:$PATH:/usr/local/bin"
 #Set some basics where the system defaults dont make sense
 export BLOCKSIZE=1k
 export GREP_OPTIONS='--color=auto'
@@ -41,6 +41,9 @@ alias jump="ssh brad@jump.iqity.org"
 
 #Connect to Cal jump server
 alias calJump="ssh brad@cal-jump.iqity.org"
+
+#Connect to PocketBallot server
+alias pocket="ssh badair@34.202.139.118"
 
 #Clear screen
 alias cls="clear"
@@ -220,3 +223,7 @@ extract () {
 #####################
 #Env Variables
 #####################
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="/Users/bpadair/.sdkman"
+[[ -s "/Users/bpadair/.sdkman/bin/sdkman-init.sh" ]] && source "/Users/bpadair/.sdkman/bin/sdkman-init.sh"
