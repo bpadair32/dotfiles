@@ -73,7 +73,7 @@ alias make5mb="mkfile 5m ./5MB.dat"
 alias make10mb="mkfile 10m ./10MB.dat"
 
 #Get external IP address
-alias myip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias my-ip="curl ipinfo.io/ip"
 
 #Edit bash_profile
 alias editProf="vim ~/.bash_profile"
