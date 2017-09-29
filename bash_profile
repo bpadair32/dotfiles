@@ -28,6 +28,7 @@ PROMPT_COMMAND='history -a'
 
 #Set the prompt
 export PS1="\[\e[0;36m\]\u@\[\e[m\e[0;32m\]\h:\[\e[m\e[0;34m\]\W:\[\e[m\`parse_git_branch\`\] "
+#export PS1="\u@\h:\W "
 
 ##################
 #Aliases
