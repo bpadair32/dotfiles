@@ -151,4 +151,8 @@ alias bckup="ssh badair@192.168.1.243"
 #manage hosts file
 alias hosts-norm="sudo mv /etc/hosts /etc/hosts.2co && sudo mv /etc/hosts.ba /etc/hosts"
 alias hosts-2co="sudo mv /etc/hosts /etc/hosts.ba && sudo mv /etc/hosts.2co /etc/hosts"
+
+#Get temp AWS credentials
+alias set-aws-creds="source /Users/bpadair/Documents/scripts/bash/get-sts-creds.sh"
+
 source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
