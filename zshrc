@@ -124,7 +124,7 @@ alias mkdir="mkdir -pv"
 #VPN Connection scripts
 alias vpn-dis='~/Documents/scripts/bash/discon.sh'
 alias vpn-dc1='~/Documents/scripts/bash/vpn-dc1.sh'
-
+alias vpn-eu='~/Documents/scripts/bash/vpn-eu.sh'
 #System maintenance
 alias brewup='brew update; brew upgrade; brew prune; brew cleanup; brew doctor'
 alias cleanTemp="rm -rf ~/Documents/temp/*"
