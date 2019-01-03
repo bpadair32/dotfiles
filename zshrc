@@ -148,8 +148,9 @@ alias screen="tmux"
 alias editProf="vim ~/.zshrc"
 alias reload="source ~/.zshrc"
 
-#Connect to bckup-01 jump server
+#Connect to common servers
 alias bckup="ssh badair@192.168.1.243"
+alias obi="ssh obi-wan.local"
 
 #Get temp AWS credentials
 alias set-aws-creds="source /Users/bpadair/Documents/scripts/bash/set-sts-creds.sh"
