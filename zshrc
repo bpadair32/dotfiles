@@ -1,13 +1,10 @@
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
-export PATH="/usr/local/opt/coreutils/libexec/gnubin:/usr/local/sbin:$PATH:/usr/local/bin:/Users/bpadair/Documents/2Checkout/scs"
+#Set path and make sure that coreutils is first in oder to override the built in MacOS utils
+export PATH="/usr/local/opt/coreutils/libexec/gnubin:/usr/local/sbin:$PATH"
 
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/bpadair/.oh-my-zsh
-export SCS_CONF=/Users/bpadair/Documents/2Checkout/scs-config
-# Set name of the theme to load. Optionally, if you set this to "random"
-# it'll load a random theme each time that oh-my-zsh is loaded.
-# See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
+export ZSH=/Users/bpadair/.oh-my-zs
+
+#Set ZSH theme
 ZSH_THEME="risto"
 
 # Uncomment the following line to use case-sensitive completion.
@@ -15,7 +12,7 @@ ZSH_THEME="risto"
 
 # Uncomment the following line to use hyphen-insensitive completion. Case
 # sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
+ HYPHEN_INSENSITIVE="true"
 
 # Uncomment the following line to disable bi-weekly auto-update checks.
 # DISABLE_AUTO_UPDATE="true"
@@ -52,7 +49,7 @@ ZSH_THEME="risto"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(aws osx sudo git colorize brew docker httpie npm sublime vscode web-search  zsh-autosuggestions) 
+plugins=(aws osx sudo git colorize brew docker httpie npm sublime vscode web-search zsh-autosuggestions) 
 
 source $ZSH/oh-my-zsh.sh
 
@@ -73,18 +70,6 @@ source $ZSH/oh-my-zsh.sh
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
-# ssh
-# export SSH_KEY_PATH="~/.ssh/rsa_id"
-
-# Set personal aliases, overriding those provided by oh-my-zsh libs,
-# plugins, and themes. Aliases can be placed here, though oh-my-zsh
-# users are encouraged to define aliases within the ZSH_CUSTOM folder.
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-
 #Make some basic functions more useful
 alias cat="bat"
 alias ls="ls -la --color"
@@ -96,6 +81,7 @@ alias top="htop"
 alias curl="http"
 alias du="ncdu"
 alias tcptraceroute="sudo tcptraceroute"
+alias grep="grep --color-auto"
 
 #Quick directory navigation
 alias ..="cd .."
@@ -108,6 +94,7 @@ alias temp="cd ~/Documents/temp"
 alias adair="cd ~/Documents/Adair\ Technology"
 alias 2co="cd ~/Documents/2Checkout"
 alias clients="cd ~/Documents/Adair\ Technology/clients"
+alias tools="cd ~/Documents/tools"
 
 #Count files in directory
 alias countFiles="echo $(ls -1 | wc -l)"
@@ -127,9 +114,10 @@ alias mkdir="mkdir -pv"
 alias vpn-dis='~/Documents/scripts/bash/discon.sh'
 alias vpn-dc1='~/Documents/scripts/bash/vpn-dc1.sh'
 alias vpn-eu='~/Documents/scripts/bash/vpn-eu.sh'
+alias vpn-us='~/Documents/scripts/bash/vpn-us.sh'
 
 #System maintenance
-alias brewup='brew update; brew upgrade; brew prune; brew cleanup; brew doctor'
+alias brewup='brew update; brew upgrade; brew prune; brew cleanup; brew doctor; brew cask update; brew cask upgrade'
 alias cleanTemp="rm -rf ~/Documents/temp/*"
 
 #Utilities
