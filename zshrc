@@ -2,7 +2,7 @@
 export PATH="/usr/local/opt/coreutils/libexec/gnubin:/usr/local/sbin:$PATH"
 
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/bpadair/.oh-my-zs
+export ZSH=/Users/bpadair/.oh-my-zsh
 
 #Set ZSH theme
 ZSH_THEME="risto"
@@ -81,7 +81,7 @@ alias top="htop"
 alias curl="http"
 alias du="ncdu"
 alias tcptraceroute="sudo tcptraceroute"
-alias grep="grep --color-auto"
+alias grep="grep --color=auto"
 
 #Quick directory navigation
 alias ..="cd .."
