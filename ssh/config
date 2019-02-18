@@ -1,3 +1,12 @@
+Host admins.avangate.local
+  ForwardAgent   yes
+  User           brada
+
+Host *.avangate.local *.avangate.com !admins.avangate.local !gitlab.avangate.local
+  User           brada
+  ProxyCommand ssh -i ~/.ssh/id_rsa -W %h:%p admins.avangate.local
+
 Host *
   ForwardAgent yes
   HostKeyAlgorithms +ssh-dss
+  User badair
