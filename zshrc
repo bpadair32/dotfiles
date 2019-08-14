@@ -49,7 +49,7 @@ ZSH_THEME="risto"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(aws osx sudo git colorize brew docker httpie npm sublime vscode web-search zsh-autosuggestions) 
+plugins=(aws ansible osx sudo git colorize brew docker httpie npm sublime vscode web-search you-should-use zsh-autosuggestions) 
 
 source $ZSH/oh-my-zsh.sh
 
@@ -80,7 +80,6 @@ alias ping="prettyping"
 alias top="htop"
 alias curl="http"
 alias du="ncdu"
-alias tcptraceroute="sudo tcptraceroute"
 alias grep="grep --color=auto"
 
 #Quick directory navigation
@@ -95,14 +94,11 @@ alias adair="cd ~/Documents/Adair\ Technology"
 alias 2co="cd ~/Documents/2Checkout"
 alias clients="cd ~/Documents/Adair\ Technology/clients"
 alias tools="cd ~/Documents/tools"
+alias scripts="cd ~/Documents/scripts"
+alias cfe="cd ~/Documents/2Checkout/repos/cfengine"
 
 #Count files in directory
 alias countFiles="echo $(ls -1 | wc -l)"
-
-#Make files of a certain size
-alias make1mb="mkfile 1m ./1MB.dat"
-alias make5mb="mkfile 5m ./5MB.dat"
-alias make10mb="mkfile 10m ./10MB.dat"
 
 #Get external IP address
 alias my-ip="curl ipinfo.io/ip"
@@ -117,7 +113,7 @@ alias vpn-eu='~/Documents/scripts/bash/vpn-eu.sh'
 alias vpn-us='~/Documents/scripts/bash/vpn-us.sh'
 
 #System maintenance
-alias brewup='brew update; brew upgrade; brew prune; brew cleanup; brew doctor; brew cask update; brew cask upgrade'
+alias brewup='brew -v update && brew -v upgrade && brew cask upgrade && brew -v cleanup --prune=5 && brew doctor'
 alias cleanTemp="rm -rf ~/Documents/temp/*"
 
 #Utilities
@@ -138,13 +134,18 @@ alias reload="source ~/.zshrc"
 
 #Connect to common servers
 alias bckup="ssh badair@192.168.1.243"
-alias obi="ssh obi-wan.local"
 
 #Get temp AWS credentials
 alias set-aws-creds="source /Users/bpadair/Documents/scripts/bash/set-sts-creds.sh"
 
+alias ngrok="~/Documents/tools/ngrok"
+
 source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 eval $(thefuck --alias)
-
 archey
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
