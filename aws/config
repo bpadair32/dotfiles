@@ -1,0 +1,7 @@
+[default]
+region = us-east-1
+output = json
+
+[prod]
+region = us-east-2
+output = json

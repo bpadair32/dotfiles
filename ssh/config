@@ -1,12 +1,28 @@
-Host admins.avangate.local
-  ForwardAgent   yes
-  User           brada
+Host    gitlab.avangate.local
+        Hostname        gitlab.avangate.local
+        IdentityFile    ~/.ssh/id_rsa
+        IdentitiesOnly  yes
+        User            git
 
-Host *.avangate.local *.avangate.com !admins.avangate.local !gitlab.avangate.local
-  User           brada
-  ProxyCommand ssh -i ~/.ssh/id_rsa -W %h:%p admins.avangate.local
+Host    admins.avangate.local
+        ForwardAgent    yes
+        User            brada
 
-Host *
-  ForwardAgent yes
-  HostKeyAlgorithms +ssh-dss
-  User badair
+Host    admin01-ams.2checkout.com
+        ForwardAgent    yes
+        User            badair
+
+Host    *.ams.avangate.local !admin01-ams.2checkout.com
+        User            brada
+        ProxyCommand    ssh -i ~/.ssh/id_rsa -W %h:%p admin01-ams.2checkout.com
+        ForwardAgent    yes
+
+Host    *.prod.2co.com !*.ams.avangate.local *.avangate.local *.avangate.com !admins.avangate.local !gitlab.avangate.local
+        User            brada
+        ProxyCommand    ssh -i ~/.ssh/id_rsa -W %h:%p admins.avangate.local
+        ForwardAgent    yes
+
+Host    www201.2checkout.com www202.2checkout.com www203.2checkout.com www204.2checkout.com mongo01.2checkout.com
+        User            badair
+        ProxyCommand    ssh -i ~/.ssh/id_rsa -W %h:%p admin01-ams.2checkout.com
+        ForwardAgent    yes
