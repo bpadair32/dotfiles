@@ -12,17 +12,40 @@ Host    admin01-ams.2checkout.com
         ForwardAgent    yes
         User            badair
 
-Host    *.ams.avangate.local !admin01-ams.2checkout.com
+Host    *.ams.avangate.local !dbaux03.ams.avangate.local !dbaux01.ams.avangate.local !awx01.ams.avangate.local !admin01-ams.2checkout.com !www2*.ams.avangate.local !ees*.ams.avangate.local !ptcs*.ams.avangate.local !search*.ams.avangate.local !tpay-api*.ams.avangate.local !recsrv*.ams.avangate.local !lambda*.ams.avangate.local
         User            brada
         ProxyCommand    ssh -i ~/.ssh/id_rsa -W %h:%p admin01-ams.2checkout.com
         ForwardAgent    yes
 
-Host    *.prod.2co.com !*.ams.avangate.local *.avangate.local *.avangate.com !admins.avangate.local !gitlab.avangate.local
+Host    *.prod.2co.com !*.ams.avangate.local *.avangate.local *.avangate.com !wwwtest200.avangate.local !admins.avangate.local !gitlab.avangate.local 
         User            brada
         ProxyCommand    ssh -i ~/.ssh/id_rsa -W %h:%p admins.avangate.local
         ForwardAgent    yes
 
-Host    www201.2checkout.com www202.2checkout.com www203.2checkout.com www204.2checkout.com mongo01.2checkout.com
+Host    dbaux01.ams.avangate.local dbaux03.ams.avangate.local awx01.ams.avangate.local dev01-ams www2*.ams.avangate.local mongo01.2checkout.com dng02-ams.2checkout.com dbaux01.ams.avangate.local ees*.ams.avangate.local ptcs*.ams.avangate.local search*.ams.avangate.local tpay-api*.ams.avangate.local recsrv*.ams.avangate.local lambda*.ams.avangate.local
         User            badair
         ProxyCommand    ssh -i ~/.ssh/id_rsa -W %h:%p admin01-ams.2checkout.com
         ForwardAgent    yes
+
+Host    wwwtest200.avangate.local
+        User           badair
+        ProxyCommand   ssh -i ~/.ssh/id_rsa -W %h:%p admins.avangate.local
+        ForwardAgent   yes
+
+Host    35.172.33.232
+        User           ec2-user
+        ForwardAgent   yes
+
+Host    10.100.2.174 10.100.2.250 10.100.2.105
+        User           ec2-user
+        ProxyCommand   ssh -i ~/Documents/Adair\ Technology/clients/mocafi/pems/galileo-dev.pem -W %h:%p 35.172.33.232
+        ForwardAgent   yes
+
+Host    34.200.214.131
+        User           ec2-user
+        ForwardAgent   yes
+
+Host    10.200.2.96 10.200.2.50 10.200.2.253
+        User           ec2-user
+        ProxyCommand   ssh -i ~/Documents/Adair\ Technology/clients/mocafi/pems/galileo-prod.pem -W %h:%p 34.200.214.131
+        ForwardAgent   yes

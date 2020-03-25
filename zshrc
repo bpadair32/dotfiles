@@ -1,5 +1,5 @@
 #Set path and make sure that coreutils is first in oder to override the built in MacOS utils
-export PATH="/usr/local/opt/coreutils/libexec/gnubin:/usr/local/sbin:$PATH"
+export PATH="/usr/local/opt/findutils/libexec/gnubin:/usr/local/opt/gnu-sed/libexec/gnubin:/usr/local/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$PATH"
 
 # Path to your oh-my-zsh installation.
 export ZSH=/Users/bpadair/.oh-my-zsh
@@ -140,6 +140,7 @@ alias set-aws-creds="source /Users/bpadair/Documents/scripts/bash/set-sts-creds.
 
 alias ngrok="~/Documents/tools/ngrok"
 
+alias connect="~/Documents/scripts/zsh/connect-to.sh"
 source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 eval $(thefuck --alias)
