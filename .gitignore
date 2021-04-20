@@ -2,3 +2,6 @@
 .DS_Store
 ssh/known_hosts
 */known_hosts
+gnupg/*
+**/*2
+**/cache/*

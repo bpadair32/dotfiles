@@ -1,12 +1,11 @@
-[default]
-region = eu-west-1
-output = json
-
 [avangate]
 region = eu-west-1
 
 [avangate-dev]
 region = eu-west-1
+
+[avangate-devops]
+region=eu-west-1
 
 [avangate-prod]
 region= eu-west-1
@@ -14,10 +13,5 @@ region= eu-west-1
 [adair]
 regions = us-east-2
 
-[mocafi]
-region = us-east-1
-
 [mfa]
-region = eu-west-1
-[profile mfa]
 region = eu-west-1

@@ -71,6 +71,8 @@ source $ZSH/oh-my-zsh.sh
 # export ARCHFLAGS="-arch x86_64"
 
 #Make some basic functions more useful
+alias brewr="arch -x86_64 /usr/local/bin/brew $@"
+alias masr="arch -x86_64 /usr/local/bin/mas $@"
 alias cat="bat"
 alias ls="ls -la --color"
 alias nrs="npm run-script"
