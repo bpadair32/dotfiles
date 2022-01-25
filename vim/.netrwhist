@@ -1,5 +1,3 @@
 let g:netrw_dirhistmax  =10
-let g:netrw_dirhist_cnt =3
-let g:netrw_dirhist_1='/usr/local/etc/nginx/servers'
-let g:netrw_dirhist_2='/Users/bpadair/.aws'
-let g:netrw_dirhist_3='/Users/bpadair/Documents/Personal/Projects/adair-tech/contents/articles/another-test'
+let g:netrw_dirhistcnt =1
+let g:netrw_dirhist_1='/Users/bpadair/Documents/repos/fs/finite-state-iam/iam/.terraform/providers'

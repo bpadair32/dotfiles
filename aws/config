@@ -15,3 +15,94 @@ regions = us-east-2
 
 [mfa]
 region = eu-west-1
+[profile fs-stage-admin]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 403455490220
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-dev-admin]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 185231689230
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-audit-admin]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 594380655327
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-prod-sca]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 318006199957
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-log-archive]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 751941813347
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-admin]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 818951434471
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-stage-sca]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 708793452028
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-senrio]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 694829087082
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-dev-sca]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 068138954022
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-prod-admin]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 383877828724
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-tools-admin]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 895261158863
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fs-prod-ro]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 383877828724
+sso_role_name = FSReadOnlyAccess
+region = us-east-1
+output = json
+[profile stage-sca-dev]
+sso_start_url = https://fstate.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 708793452028
+sso_role_name = FSBackendDevelopersStageSca
+region = us-east-1
+output = json

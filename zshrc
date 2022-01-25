@@ -49,7 +49,7 @@ ZSH_THEME="risto"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(aws ansible osx sudo git colorize brew docker httpie sublime vscode web-search you-should-use zsh-autosuggestions) 
+plugins=(aws ansible macos sudo git colorize brew docker httpie sublime vscode web-search you-should-use zsh-autosuggestions) 
 
 source $ZSH/oh-my-zsh.sh
 
@@ -143,9 +143,13 @@ alias set-aws-creds="source /Users/bpadair/Documents/scripts/bash/set-sts-creds.
 alias ngrok="~/Documents/tools/ngrok"
 
 alias connect="~/Documents/scripts/zsh/connect-to.sh"
+
+#Sometimes we need real OpenSSL and not the Libre version
+alias ropenSSL="/usr/local/opt/openssl/bin/openssl"
 source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 eval $(thefuck --alias)
+
 archey
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
