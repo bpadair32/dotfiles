@@ -1,5 +1,5 @@
 #Set path and make sure that coreutils is first in oder to override the built in MacOS utils
-export PATH="/usr/local/opt/findutils/libexec/gnubin:/usr/local/opt/gnu-sed/libexec/gnubin:/usr/local/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$PATH"
 
 # Path to your oh-my-zsh installation.
 export ZSH=/Users/bpadair/.oh-my-zsh
@@ -49,7 +49,7 @@ ZSH_THEME="risto"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(aws ansible macos sudo git colorize brew docker httpie sublime vscode web-search you-should-use zsh-autosuggestions) 
+plugins=(aws ansible osx sudo git colorize brew docker httpie sublime vscode web-search zsh-syntax-highlighting) 
 
 source $ZSH/oh-my-zsh.sh
 
@@ -71,11 +71,9 @@ source $ZSH/oh-my-zsh.sh
 # export ARCHFLAGS="-arch x86_64"
 
 #Make some basic functions more useful
-alias brewr="arch -x86_64 /usr/local/bin/brew $@"
 alias masr="arch -x86_64 /usr/local/bin/mas $@"
 alias cat="bat"
 alias ls="ls -la --color"
-alias nrs="npm run-script"
 alias pip="pip3"
 alias man="tldr"
 alias ping="prettyping"
@@ -83,7 +81,7 @@ alias top="htop"
 alias curl="http"
 alias du="ncdu"
 alias grep="grep --color=auto"
-
+alias ps="procs"
 #Quick directory navigation
 alias ..="cd .."
 alias ...="cd ../.."
@@ -92,12 +90,9 @@ alias .....="cd ../../../.."
 alias ~="cd ~"
 alias docs="cd ~/Documents"
 alias temp="cd ~/Documents/temp"
-alias adair="cd ~/Documents/Adair\ Technology"
+alias adair="cd ~/Documents/Adair_Technology"
 alias 2co="cd ~/Documents/2Checkout"
-alias clients="cd ~/Documents/Adair\ Technology/clients"
-alias tools="cd ~/Documents/tools"
-alias scripts="cd ~/Documents/scripts"
-alias cfe="cd ~/Documents/2Checkout/repos/cfengine"
+alias clients="cd ~/Documents/Adair_Technology/clients"
 
 #Count files in directory
 alias countFiles="echo $(ls -1 | wc -l)"
@@ -108,14 +103,8 @@ alias my-ip="curl ipinfo.io/ip"
 #Automatically make parent directories when mkdir
 alias mkdir="mkdir -pv"
 
-#VPN Connection scripts
-alias vpn-dis='~/Documents/scripts/bash/discon.sh'
-alias vpn-dc1='~/Documents/scripts/bash/vpn-dc1.sh'
-alias vpn-eu='~/Documents/scripts/bash/vpn-eu.sh'
-alias vpn-us='~/Documents/scripts/bash/vpn-us.sh'
-
-#System maintenance
-alias brewup='brew -v update && brew -v upgrade && brew cask upgrade && brew -v cleanup --prune=5 && brew doctor'
+#esystem maintenance
+alias brewup='brew -v update && brew -v upgrade && brew -v upgrade --cask && brew -v cleanup --prune=5 && brew doctor'
 alias cleanTemp="rm -rf ~/Documents/temp/*"
 
 #Utilities
@@ -134,25 +123,22 @@ alias screen="tmux"
 alias editProf="vim ~/.zshrc"
 alias reload="source ~/.zshrc"
 
-#Connect to common servers
-alias bckup="ssh badair@192.168.1.243"
-
-#Get temp AWS credentials
-alias set-aws-creds="source /Users/bpadair/Documents/scripts/bash/set-sts-creds.sh"
-
 alias ngrok="~/Documents/tools/ngrok"
 
-alias connect="~/Documents/scripts/zsh/connect-to.sh"
+#The command to add a spacer is annoying
+alias spacer="defaults write com.appl.dock persistent-apps -array-add '{tile-type="spacer-tile";}' && killall Dock"
 
 #Sometimes we need real OpenSSL and not the Libre version
 alias ropenSSL="/usr/local/opt/openssl/bin/openssl"
-source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 eval $(thefuck --alias)
 
-archey
-
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+if type brew &>/dev/null; then
+    FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
 
+    autoload -Uz compinit
+    compinit
+  fi
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
