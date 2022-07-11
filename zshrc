@@ -2,7 +2,7 @@
 export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$PATH"
 
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/bpadair/.oh-my-zsh
+export ZSH=/Users/brad.adair/.oh-my-zsh
 
 #Set ZSH theme
 ZSH_THEME="risto"
@@ -49,7 +49,7 @@ ZSH_THEME="risto"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(aws ansible osx sudo git colorize brew docker httpie sublime vscode web-search zsh-syntax-highlighting) 
+plugins=(aws ansible osx sudo git colorize brew docker httpie sublime vscode web-search)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -91,7 +91,7 @@ alias ~="cd ~"
 alias docs="cd ~/Documents"
 alias temp="cd ~/Documents/temp"
 alias adair="cd ~/Documents/Adair_Technology"
-alias 2co="cd ~/Documents/2Checkout"
+alias fbi="cd ~/Documents/FishBowl"
 alias clients="cd ~/Documents/Adair_Technology/clients"
 
 #Count files in directory
@@ -141,4 +141,4 @@ if type brew &>/dev/null; then
     compinit
   fi
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
