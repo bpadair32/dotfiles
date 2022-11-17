@@ -106,3 +106,64 @@ sso_account_id = 708793452028
 sso_role_name = FSBackendDevelopersStageSca
 region = us-east-1
 output = json
+[profile timeAdmin]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 682754368335
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile Fishbowl-Admins-471540639412]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 471540639412
+sso_role_name = Fishbowl-Admins
+region = us-east-1
+output = json
+[profile fboAdmin]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 105837088580
+sso_role_name = Fishbowl-Admins
+region = us-east-1
+output = json
+[profile fboDev]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 612881645446
+sso_role_name = Fishbowl-Admins
+region = us-east-1
+output = json
+[profile fboNewDev]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 897420120792
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile AWSAdministratorAccess-241274614876]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 241274614876
+sso_role_name = AWSAdministratorAccess
+[profile fboNewStage]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 241274614876
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fboNewProd]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 264412631035
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile fboLab]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 105072392632
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json

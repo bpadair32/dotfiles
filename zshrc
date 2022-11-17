@@ -1,5 +1,5 @@
 #Set path and make sure that coreutils is first in oder to override the built in MacOS utils
-export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/bin/:/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$PATH"
 
 # Path to your oh-my-zsh installation.
 export ZSH=/Users/brad.adair/.oh-my-zsh
@@ -12,13 +12,13 @@ ZSH_THEME="risto"
 
 # Uncomment the following line to use hyphen-insensitive completion. Case
 # sensitive completion must be off. _ and - will be interchangeable.
- HYPHEN_INSENSITIVE="true"
+HYPHEN_INSENSITIVE="true"
 
 # Uncomment the following line to disable bi-weekly auto-update checks.
 # DISABLE_AUTO_UPDATE="true"
 
 # Uncomment the following line to change how often to auto-update (in days).
- export UPDATE_ZSH_DAYS=7
+export UPDATE_ZSH_DAYS=7
 
 # Uncomment the following line to disable colors in ls.
 # DISABLE_LS_COLORS="true"
@@ -27,7 +27,7 @@ ZSH_THEME="risto"
 # DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
- ENABLE_CORRECTION="true"
+ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 # COMPLETION_WAITING_DOTS="true"
@@ -61,11 +61,11 @@ source $ZSH/oh-my-zsh.sh
 # export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
- if [[ -n $SSH_CONNECTION ]]; then
-   export EDITOR='vim'
- else
-   export EDITOR='vim'
- fi
+if [[ -n $SSH_CONNECTION ]]; then
+  export EDITOR='vim'
+else
+  export EDITOR='vim'
+fi
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -82,6 +82,8 @@ alias curl="http"
 alias du="ncdu"
 alias grep="grep --color=auto"
 alias ps="procs"
+alias python="python3"
+alias pip="pip3"
 #Quick directory navigation
 alias ..="cd .."
 alias ...="cd ../.."
