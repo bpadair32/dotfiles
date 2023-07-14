@@ -3,7 +3,7 @@ export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/loc
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/bpadair/.oh-my-zsh
+export ZSH=/Users/brad.adair/.oh-my-zsh
 
 #Set ZSH theme
 ZSH_THEME="risto"
@@ -13,13 +13,13 @@ ZSH_THEME="risto"
 
 # Uncomment the following line to use hyphen-insensitive completion. Case
 # sensitive completion must be off. _ and - will be interchangeable.
- HYPHEN_INSENSITIVE="true"
+HYPHEN_INSENSITIVE="true"
 
 # Uncomment the following line to disable bi-weekly auto-update checks.
 # DISABLE_AUTO_UPDATE="true"
 
 # Uncomment the following line to change how often to auto-update (in days).
- export UPDATE_ZSH_DAYS=7
+export UPDATE_ZSH_DAYS=7
 
 # Uncomment the following line to disable colors in ls.
 # DISABLE_LS_COLORS="true"
@@ -28,7 +28,7 @@ ZSH_THEME="risto"
 # DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
- ENABLE_CORRECTION="true"
+ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 # COMPLETION_WAITING_DOTS="true"
@@ -50,7 +50,7 @@ ZSH_THEME="risto"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(aws ansible osx sudo git colorize brew docker httpie sublime vscode web-search zsh-syntax-highlighting) 
+plugins=(aws ansible osx sudo git colorize brew docker httpie sublime vscode web-search)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -62,11 +62,11 @@ source $ZSH/oh-my-zsh.sh
 # export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
- if [[ -n $SSH_CONNECTION ]]; then
-   export EDITOR='vim'
- else
-   export EDITOR='vim'
- fi
+if [[ -n $SSH_CONNECTION ]]; then
+  export EDITOR='vim'
+else
+  export EDITOR='vim'
+fi
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -83,6 +83,8 @@ alias curl="http"
 alias du="ncdu"
 alias grep="grep --color=auto"
 alias ps="procs"
+alias python="python3"
+alias pip="pip3"
 #Quick directory navigation
 alias ..="cd .."
 alias ...="cd ../.."
@@ -92,7 +94,7 @@ alias ~="cd ~"
 alias docs="cd ~/Documents"
 alias temp="cd ~/Documents/temp"
 alias adair="cd ~/Documents/Adair_Technology"
-alias 2co="cd ~/Documents/2Checkout"
+alias fbi="cd ~/Documents/FishBowl"
 alias clients="cd ~/Documents/Adair_Technology/clients"
 
 #Count files in directory
@@ -142,4 +144,4 @@ if type brew &>/dev/null; then
     compinit
   fi
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
