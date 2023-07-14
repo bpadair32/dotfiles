@@ -1,5 +1,6 @@
 #Set path and make sure that coreutils is first in oder to override the built in MacOS utils
 export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$PATH"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # Path to your oh-my-zsh installation.
 export ZSH=/Users/bpadair/.oh-my-zsh
