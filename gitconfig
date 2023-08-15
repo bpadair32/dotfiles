@@ -2,9 +2,15 @@
 [user]
 # Please adapt and uncomment the following lines:
 	name = Brad Adair
-	email = bradadair@gmail.com
+	email = bradadair@@gmail.com
 [core]
 	excludesfile = /Users/bpadair/.gitignore_global
+  editor = nvim
+  pager = less
+[color]
+  ui = true
+[pull]
+  rebase = false
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
 	path = 
