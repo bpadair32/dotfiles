@@ -19,5 +19,12 @@ set nowrap
 set smartcase
 set showmatch
 set cursorline
+set laststatus=2
+set mouse=a
+set title
+set background=dark
+set nofoldenable
+set autoread
+set spell
 :au FocusLost * silent! wa
 
