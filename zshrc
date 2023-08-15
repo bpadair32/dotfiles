@@ -1,17 +1,22 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 #Set path and make sure that coreutils is first in oder to override the built in MacOS utils
-<<<<<<< HEAD
 export PATH="/opt/homebrew/bin/:/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$HOME/go/bin:${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-=======
-export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$PATH"
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
->>>>>>> a3b3c61fbfbd71597a7ccfaa2a4ebeeb59fcebab
+
+#Setup $KUBECONFIG
+export KUBECONFIG="${KUBECONFIG}:/Users/brad.adair/.kube/config-sellware-dev:/Users/brad.adair/.kube/config-colo:/Users/brad.adair/.kube/config-homelab"
 
 # Path to your oh-my-zsh installation.
 export ZSH=/Users/brad.adair/.oh-my-zsh
 
 #Set ZSH theme
-ZSH_THEME="risto"
-
+#ZSH_THEME="risto"
+ZSH_THEME="powerlevel10k/powerlevel10k"
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
 
@@ -54,7 +59,7 @@ ENABLE_CORRECTION="true"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(aws ansible osx sudo git colorize brew docker httpie sublime vscode web-search)
+plugins=(aws ansible git colorize vscode web-search)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -78,7 +83,6 @@ fi
 #Make some basic functions more useful
 alias cat="bat"
 alias ls="ls -la --color"
-alias man="tldr"
 alias ping="prettyping"
 alias top="htop"
 alias du="ncdu"
@@ -125,11 +129,11 @@ alias scanWifi="airport -s"
 alias screen="tmux"
 
 #Manage profile
-alias editProf="vim ~/.zshrc"
+alias editProf="code ~/.zshrc"
 alias reload="source ~/.zshrc"
 
 #Annoying commands I can never remember
-alias spacer="defaults write com.appl.dock persistent-apps -array-add '{tile-type="spacer-tile";}' && killall Dock"
+alias spacer="defaults write com.apple.dock persistent-apps -array-add '{tile-type="spacer-tile";}' && killall Dock"
 alias ports='netstat -a | grep -i "listen"'
 alias backup='tar -zcvf $(date +%Y%m%d).tar.gz *'
 alias extract='for i in *.gz; do tar xvf $i; done'
@@ -138,7 +142,7 @@ alias extract='for i in *.gz; do tar xvf $i; done'
 alias ropenSSL="/usr/local/opt/openssl/bin/openssl"
 
 #Other useful stuff
-alias weather='function _weather() { curl wttr.in/$i; }; _weather'
+alias weather='function _weather() { \curl wttr.in/$i; }; _weather'
 alias jsonpretty='function _jsonpretty() { python -m json.tool $1; } _jsonpretty'
 
 function monitorProcess() {
@@ -167,3 +171,7 @@ if type brew &>/dev/null; then
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

@@ -167,3 +167,17 @@ sso_account_id = 105072392632
 sso_role_name = AWSAdministratorAccess
 region = us-east-1
 output = json
+[profile fboMaster]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 072994264470
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
+[profile swDev]
+sso_start_url = https://fbinv.awsapps.com/start#/
+sso_region = us-east-1
+sso_account_id = 791367914073
+sso_role_name = AWSAdministratorAccess
+region = us-east-1
+output = json
