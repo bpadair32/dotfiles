@@ -1,3 +1,4 @@
+~/greeting.sh
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -6,7 +7,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 #Set path and make sure that coreutils is first in oder to override the built in MacOS utils
-export PATH="/opt/homebrew/bin/:/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$HOME/go/bin:${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/bin/:/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$HOME/go/bin:${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 #Setup $KUBECONFIG
 export KUBECONFIG="${KUBECONFIG}:/Users/brad.adair/.kube/config-sellware-dev:/Users/brad.adair/.kube/config-colo:/Users/brad.adair/.kube/config-homelab"
@@ -74,12 +75,13 @@ source $ZSH/oh-my-zsh.sh
 if [[ -n $SSH_CONNECTION ]]; then
   export EDITOR='vim'
 else
-  export EDITOR='vim'
+  export EDITOR='nvim'
 fi
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
+export JIRA_API_TOKEN="ATATT3xFfGF0kMQeenjLSiCirD_1QLhJGrZzrYAeFd0MjyHlrfXfjgIHfwH7tltW3y4OML1uSstcpJ78VbxyPAr8BptMP1QpkRHS9vgHhV68qvJCa93KeOJG5XF4aKvbTfQI1sysR23xwgGQQjo1oaxdcYBYIRyOpyMvGdzZ3Nmv_BLjkPtu-aY=766AA370"
 #Make some basic functions more useful
 alias cat="bat"
 alias ls="ls -la --color"
@@ -129,7 +131,7 @@ alias scanWifi="airport -s"
 alias screen="tmux"
 
 #Manage profile
-alias editProf="code ~/.zshrc"
+alias editProf="nvim ~/.zshrc"
 alias reload="source ~/.zshrc"
 
 #Annoying commands I can never remember
@@ -173,6 +175,5 @@ test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-~/greeting.sh
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
