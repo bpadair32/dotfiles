@@ -10,10 +10,10 @@ fi
 export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/bin/:/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$HOME/go/bin:${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 #Setup $KUBECONFIG
-export KUBECONFIG="${KUBECONFIG}:/Users/brad.adair/.kube/config-sellware-dev:/Users/brad.adair/.kube/config-colo:/Users/brad.adair/.kube/config-homelab"
+export KUBECONFIG="${KUBECONFIG}:/Users/${USER}/.kube/config-sellware-dev:/Users/${USER}/.kube/config-colo:/Users/${USER}/.kube/config-homelab"
 
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/brad.adair/.oh-my-zsh
+export ZSH=/Users/${USER}/.oh-my-zsh
 
 #Set ZSH theme
 #ZSH_THEME="risto"
@@ -150,7 +150,7 @@ alias jsonpretty='function _jsonpretty() { python -m json.tool $1; } _jsonpretty
 function monitorProcess() {
   while true; do
     if ! pgrep -f $1; then
-      echo "Process $1 has completed." | mail -s "Process Complete" brad@adair.tech
+      echo "Process $1 has completed." | mail -s "Process Complete" ${USER}.tech
       break
     fi
     sleep 60
