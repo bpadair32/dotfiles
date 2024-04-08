@@ -8,7 +8,7 @@ fi
 export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/bin/:/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$HOME/go/bin:${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 #Setup $KUBECONFIG
-export KUBECONFIG="/Users/${USER}/.kube/config-hosting:/Users/${USER}/.kube/config-bold-reports:/Users/${USER}/.kube/config-sellware-qa:/Users/${USER}/.kube/config-sellware-dev:/Users/${USER}/.kube/config-colo:/Users/${USER}/.kube/config-homelab"
+export KUBECONFIG="/Users/${USER}/.kube/config-hosting:/Users/${USER}/.kube/config-bold-reports:/Users/${USER}/.kube/config-sellware-qa:/Users/${USER}/.kube/config-sellware-dev:/Users/${USER}/.kube/config-colo:/Users/${USER}/.kube/config-homelab:/Users/${USER}/.kube/config-sellware-stage:/Users/${USER}/.kube/config-sellware-prod"
 
 # Path to oh-my-zsh installation.
 export ZSH=/Users/${USER}/.oh-my-zsh

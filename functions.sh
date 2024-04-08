@@ -12,3 +12,30 @@ function recently_modified() {
 function mem_hog() {
   ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head
 }
+
+function monitorProcess() {
+  while true; do
+    if ! pgrep -f $1; then
+      echo "Process $1 has completed." | mail -s "Process Complete" ${USER}.tech
+      break
+    fi
+    sleep 60
+  done
+}
+
+function websiteStatus() {
+  curl -s --head --request GET $1 | grep "200 OK"
+}
+
+eval $(thefuck --alias)
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+if type brew &>/dev/null; then
+    FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
+
+    autoload -Uz compinit
+    compinit
+  fi
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
