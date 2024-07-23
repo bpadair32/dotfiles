@@ -1,22 +1,34 @@
+[core]
+    pager = delta
+    excludesfile = /Users/bpadair/.gitignore_global
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true    # use n and N to move between diff sections
+    side-by-side = true
+
+
+    # delta detects terminal colors automatically; set one of these to disable auto-detection
+    # dark = true
+    # light = true
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+  colorMoved = default
+
 # This is Git's per-user configuration file.
 [user]
 # Please adapt and uncomment the following lines:
 	name = Brad Adair
 	email = bradadair@gmail.com
-[core]
-	excludesfile = /Users/bpadair/.gitignore_global
-  editor = nvim
-  pager = less
 [color]
   ui = true
 [pull]
   rebase = false
-[difftool "sourcetree"]
-	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path = 
-[mergetool "sourcetree"]
-	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-	trustExitCode = true
 [commit]
 	template = /Users/bpadair/.stCommitMsg
 [init]

@@ -7,6 +7,8 @@ alias grep="grep --color=auto"
 alias python="python3"
 alias pip="pip3"
 alias vim="nvim"
+alias cat="bat"
+alias cd="z"
 #Quick directory navigation
 alias ..="cd .."
 alias ...="cd ../.."
