@@ -22,9 +22,12 @@ HYPHEN_INSENSITIVE="true"
 export UPDATE_ZSH_DAYS=7
 
 ENABLE_CORRECTION="true"
-
+{{ if eq .chezmoi.os "darwin" }}
 plugins=(aws ansible git colorize sudo web-search)
-
+{{ end -}}
+{{ if eq .chezmoi.os "linux" }}
+plugins=(aws ansible git colorize sudo web-search zsh-autosuggestions)
+{{ end -}}
 source $ZSH/oh-my-zsh.sh
 
 if [[ -n $SSH_CONNECTION ]]; then
@@ -42,7 +45,6 @@ source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 {{ end -}}
 {{ if eq .chezmoi.os "linux"}}
-source /home/${USER}/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 source /home/${USER}/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 {{ end -}}
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
