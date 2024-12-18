@@ -94,3 +94,6 @@ _fzf_comprun() {
 }
 # ---- Zoxide (better cd) ----
 eval "$(zoxide init zsh)"
+{{ if eq .chezmoi.os "linux" }}
+fpath+=~/.zsh_functions
+{{ end -}}
