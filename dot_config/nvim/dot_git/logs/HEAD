@@ -1,2 +1,3 @@
 0000000000000000000000000000000000000000 167b772af5ac3665cb36e069fc5c11e61e54913b Brad Adair <bradadair@@gmail.com> 1701791080 -0500	clone: from github.com:bpadair32/nvim-conf
 167b772af5ac3665cb36e069fc5c11e61e54913b dbbf3686e5ceb8d5ac32cadbcec5fe88d0dbce79 Brad Adair <bradadair@gmail.com> 1715004688 -0400	pull: Fast-forward
+dbbf3686e5ceb8d5ac32cadbcec5fe88d0dbce79 10c7d08d3eeb64f89135da1db2e47688acfb32bd Brad Adair <bradadair@gmail.com> 1734545900 -0500	commit: Remove ChatGPT plugin that I am no longer using
