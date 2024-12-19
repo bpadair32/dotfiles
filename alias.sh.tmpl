@@ -20,7 +20,9 @@ alias temp="cd ~/Documents/temp"
 alias adair="cd ~/Documents/Adair_Technology"
 alias fbi="cd ~/Documents/FishBowl"
 alias clients="cd ~/Documents/Adair_Technology/clients"
-
+{{ if eq .chezmoi.os "darwin" }}
+alias obdir=/Users/brad.adair/Library/Mobile\\\ Documents/iCloud~md~obsidian/Documents
+{{ end -}}
 #Count files in directory
 alias countFiles="echo $(ls -1 | wc -l)"
 
