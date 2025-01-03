@@ -5,16 +5,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 #Set path and make sure that coreutils is first in oder to override the built in MacOS utils
-{{if eq .chezmoi.os "darwin"}}
-export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/bin/:/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/sbin:/usr/local/bin:$HOME/go/bin:${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-#Setup $KUBECONFIG
-export KUBECONFIG="/Users/${USER}/.kube/config-hosting:/Users/${USER}/.kube/config-bold-reports:/Users/${USER}/.kube/config-sellware-qa:/Users/${USER}/.kube/config-sellware-dev:/Users/${USER}/.kube/config-colo:/Users/${USER}/.kube/config-homelab:/Users/${USER}/.kube/config-sellware-stage:/Users/${USER}/.kube/config-sellware-prod"
-# Path to oh-my-zsh installation.
-export ZSH=/Users/${USER}/.oh-my-zsh
-{{ end -}}
-{{ if eq .chezmoi.os "linux"}}
+
 export ZSH=/home/${USER}/.oh-my-zsh
-{{ end -}}
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 HYPHEN_INSENSITIVE="true"
@@ -22,12 +14,8 @@ HYPHEN_INSENSITIVE="true"
 export UPDATE_ZSH_DAYS=7
 
 ENABLE_CORRECTION="true"
-{{ if eq .chezmoi.os "darwin" }}
+
 plugins=(aws ansible git colorize sudo web-search)
-{{ end -}}
-{{ if eq .chezmoi.os "linux" }}
-plugins=(aws ansible git colorize sudo web-search)
-{{ end -}}
 source $ZSH/oh-my-zsh.sh
 
 if [[ -n $SSH_CONNECTION ]]; then
@@ -40,14 +28,9 @@ export JIRA_API_TOKEN="ATATT3xFfGF0kMQeenjLSiCirD_1QLhJGrZzrYAeFd0MjyHlrfXfjgIHf
 
 source ~/alias.sh
 source ~/functions.sh
-{{ if eq .chezmoi.os "darwin"}}
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-{{ end -}}
-{{ if eq .chezmoi.os "linux"}}
+
 source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 
 source /home/bpadair/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
-{{ end -}}
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
@@ -94,6 +77,5 @@ _fzf_comprun() {
 }
 # ---- Zoxide (better cd) ----
 eval "$(zoxide init zsh)"
-{{ if eq .chezmoi.os "linux" }}
+
 fpath+=~/.zsh_functions
-{{ end -}}
