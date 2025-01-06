@@ -1,4 +1,8 @@
 #Make some basic functions more useful
+{{ -eq .chezmoi.os "Darwin" }}
+alias ls="eza --long --icons --color --git"
+{{ end -}}
+{{ -eq .chezmoi.os "linux" }}
 alias ls="exa --long --icons --color --git"
 alias ping="prettyping"
 alias top="htop"
