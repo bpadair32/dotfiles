@@ -1,21 +1,27 @@
-require "core"
-
-local custom_init_path = vim.api.nvim_get_runtime_file("lua/custom/init.lua", false)[1]
-
-if custom_init_path then
-  dofile(custom_init_path)
-end
-
-require("core.utils").load_mappings()
-
-local lazypath = vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
-
--- bootstrap lazy.nvim!
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
-  require("core.bootstrap").gen_chadrc_template()
-  require("core.bootstrap").lazy(lazypath)
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
+  })
 end
-
-dofile(vim.g.base46_cache .. "defaults")
 vim.opt.rtp:prepend(lazypath)
-require "plugins"
+
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+
+require("lazy").setup("plugins", {})
+require("bpadair.globals")
+require("bpadair.remaps")
+require("bpadair.options")
+vim.cmd("colorscheme tokyonight")
+vim.cmd('hi IlluminatedWordText guibg=none gui=underline')
+vim.cmd('hi IlluminatedWordRead guibg=none gui=underline')
+vim.cmd('hi IlluminatedWordWrite guibg=none gui=underline')
+require('nvim-highlight-colors').setup({
+  enable_named_colors = false,
+})
