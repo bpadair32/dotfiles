@@ -1,11 +1,5 @@
 #Make some basic functions more useful
-{{ if eq .chezmoi.os "darwin" }}
-alias ls="eza --long --icons --color --git"
-{{ end -}}
-{{ if eq .chezmoi.os "linux" }}
 alias ls="exa --long --icons --color --git"
-{{ end -}}
-alias ping="prettyping"
 alias top="htop"
 alias du="ncdu"
 alias grep="grep --color=auto"

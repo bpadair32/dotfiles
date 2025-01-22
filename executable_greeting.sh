@@ -29,13 +29,8 @@ function welcome_greeting () {
 
 # Print system information with neofetch, if it's installed
 function welcome_sysinfo () {
-  if hash neofetch 2>/dev/null; then
-    neofetch \
-      --disable resolution de wm wm_theme theme icons terminal \
-      --backend off \
-      --colors 4 8 4 4 8 6 \
-      --color_blocks off \
-      --memory_display info
+  if hash fastfetch 2>/dev/null; then
+    fastfetch 
   fi
 }
 

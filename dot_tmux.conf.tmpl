@@ -42,16 +42,12 @@ set -g @themepack 'powerline/default/cyan'
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-sensible'
 set -g @plugin 'christoomey/vim-tmux-navigator'
-set-option -g @plugin 'b0o/tmux-autoreload'
-set -g @plugin 'yardnsm/tmux-1password'
-set -g @1password-account 'bradadair'
 set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
+set -g @plugin 'omerxx/tmux-sessionx'
+set -g @sessionx-bind 'o'
+set -g @plugin 'omerxx/tmux-floax'
 set -g @resurrect-capture-pane-contents 'on'
 set -g @continuum-restore 'on'
-{{if eq .chezmoi.os "darwin"}}
-run '/opt/homebrew/opt/tpm/share/tpm/tpm'
-{{ end -}}
-{{ if eq .chezmoi.os "linux" }}
+
 run '~/.tmux/plugins/tpm/tpm'
-{{ end -}}

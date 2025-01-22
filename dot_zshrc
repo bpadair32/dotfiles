@@ -11,15 +11,14 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Set editor
-export EDITOR=nvim
-
 # Source the p10k config
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # Init antidote and load plugins
 source "${ZDOTDIR:-$HOME}/.antidote/antidote.zsh"
 antidote load "${ZDOTDIR:-$HOME}/.zsh_plugins.txt"
+
+export EDITOR="nvim"
 
 # Load zsh completions
 autoload -U compinit && compinit
@@ -66,3 +65,5 @@ source ~/functions.sh
 
 # Set path
 export PATH=$PATH:~/bin
+
+. "$HOME/.local/bin/env"
