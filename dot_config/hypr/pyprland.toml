@@ -1,0 +1,8 @@
+[pyprland]
+plugins = ["scratchpads"]
+
+[scratchpads.term]
+animation = "fromTop"
+command = "alacritty"
+class = "Alacritty"
+size = "50% 30%"
