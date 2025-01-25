@@ -19,6 +19,7 @@ source "${ZDOTDIR:-$HOME}/.antidote/antidote.zsh"
 antidote load "${ZDOTDIR:-$HOME}/.zsh_plugins.txt"
 
 export EDITOR="nvim"
+export KUBECONFIG=~/.kube/homelab.yaml
 
 # Load zsh completions
 autoload -U compinit && compinit
