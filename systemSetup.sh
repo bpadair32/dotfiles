@@ -54,23 +54,52 @@ print_section "Checking and adding necessary repositories"
 TEMP_PKG_FILE=$(mktemp)
 cat installedDnf.txt | sed 's/-[0-9].*$//' > "$TEMP_PKG_FILE"
 
+# Check DNF version to determine the correct commands
+DNF_VERSION=$(dnf --version | head -n1 | cut -d' ' -f3 | cut -d'.' -f1)
+print_warning "Detected DNF version: $DNF_VERSION"
+
+# Function to add a repository - handles both DNF 4 and DNF 5
+add_repo() {
+    local repo_url="$1"
+    local repo_name="${2:-$1}"
+    
+    if [ "$DNF_VERSION" -ge "5" ]; then
+        # DNF 5 syntax
+        print_warning "Using DNF 5 syntax for adding repository: $repo_name"
+        dnf config-manager addrepo --from-repofile="$repo_url"
+    else
+        # DNF 4 syntax
+        print_warning "Using DNF 4 syntax for adding repository: $repo_name"
+        dnf config-manager --add-repo "$repo_url"
+    fi
+}
+
+# Function to enable a COPR repository - works with both DNF 4 and DNF 5
+enable_copr() {
+    local copr_repo="$1"
+    print_warning "Enabling COPR repository: $copr_repo"
+    
+    # COPR repos are handled the same way in both DNF 4 and DNF 5
+    dnf copr enable -y "$copr_repo"
+}
+
 # Check if RPM Fusion repositories are enabled
 if ! dnf repolist | grep -q "rpmfusion-free"; then
     print_warning "RPM Fusion Free repository not found. Adding it..."
-    dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+    add_repo "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
     print_success "RPM Fusion Free repository added"
 fi
 
 if ! dnf repolist | grep -q "rpmfusion-nonfree"; then
     print_warning "RPM Fusion NonFree repository not found. Adding it..."
-    dnf install -y https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+    add_repo "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
     print_success "RPM Fusion NonFree repository added"
 fi
 
 # Check for Hyprland repository
 if ! dnf repolist | grep -q "copr:copr.fedorainfracloud.org:solopasha:hyprland"; then
     print_warning "Hyprland repository not found. Adding it..."
-    dnf copr enable -y solopasha/hyprland
+    enable_copr "solopasha/hyprland"
     print_success "Hyprland repository added"
 fi
 
@@ -78,21 +107,39 @@ fi
 if ! dnf repolist | grep -q "code"; then
     print_warning "VS Code repository not found. Adding it..."
     rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+    
+    # Create repo file directly instead of using config-manager
+    cat > /etc/yum.repos.d/vscode.repo << EOF
+[code]
+name=Visual Studio Code
+baseurl=https://packages.microsoft.com/yumrepos/vscode
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+EOF
     print_success "VS Code repository added"
 fi
 
 # Check for Tailscale repository
 if ! dnf repolist | grep -q "tailscale"; then
     print_warning "Tailscale repository not found. Adding it..."
-    dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora/tailscale.repo
+    
+    # Create repo file directly instead of using config-manager
+    cat > /etc/yum.repos.d/tailscale.repo << EOF
+[tailscale]
+name=Tailscale
+baseurl=https://pkgs.tailscale.com/stable/fedora/\$releasever/\$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.tailscale.com/stable/fedora/rpmsign-gpg.key
+EOF
     print_success "Tailscale repository added"
 fi
 
 # Check for NeoVim repository
 if ! dnf repolist | grep -q "copr:copr.fedorainfracloud.org:agriffis:neovim-nightly"; then
     print_warning "NeoVim nightly repository not found. Adding it..."
-    dnf copr enable -y agriffis/neovim-nightly
+    enable_copr "agriffis/neovim-nightly"
     print_success "NeoVim nightly repository added"
 fi
 
