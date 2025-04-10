@@ -48,17 +48,96 @@ else
     USER_HOME="/home/$USER"
 fi
 
-print_section "Installing packages from installedDnf.txt"
+print_section "Checking and adding necessary repositories"
 
 # Create a temporary file with just the package names (removing versions)
 TEMP_PKG_FILE=$(mktemp)
 cat installedDnf.txt | sed 's/-[0-9].*$//' > "$TEMP_PKG_FILE"
 
-# Install packages
-dnf install -y $(cat "$TEMP_PKG_FILE")
-rm "$TEMP_PKG_FILE"
+# Check if RPM Fusion repositories are enabled
+if ! dnf repolist | grep -q "rpmfusion-free"; then
+    print_warning "RPM Fusion Free repository not found. Adding it..."
+    dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+    print_success "RPM Fusion Free repository added"
+fi
 
-print_success "All packages installed successfully"
+if ! dnf repolist | grep -q "rpmfusion-nonfree"; then
+    print_warning "RPM Fusion NonFree repository not found. Adding it..."
+    dnf install -y https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+    print_success "RPM Fusion NonFree repository added"
+fi
+
+# Check for Hyprland repository
+if ! dnf repolist | grep -q "copr:copr.fedorainfracloud.org:solopasha:hyprland"; then
+    print_warning "Hyprland repository not found. Adding it..."
+    dnf copr enable -y solopasha/hyprland
+    print_success "Hyprland repository added"
+fi
+
+# Check for Visual Studio Code repository (balena-etcher dependency)
+if ! dnf repolist | grep -q "code"; then
+    print_warning "VS Code repository not found. Adding it..."
+    rpm --import https://packages.microsoft.com/keys/microsoft.asc
+    sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+    print_success "VS Code repository added"
+fi
+
+# Check for Tailscale repository
+if ! dnf repolist | grep -q "tailscale"; then
+    print_warning "Tailscale repository not found. Adding it..."
+    dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora/tailscale.repo
+    print_success "Tailscale repository added"
+fi
+
+# Check for NeoVim repository
+if ! dnf repolist | grep -q "copr:copr.fedorainfracloud.org:agriffis:neovim-nightly"; then
+    print_warning "NeoVim nightly repository not found. Adding it..."
+    dnf copr enable -y agriffis/neovim-nightly
+    print_success "NeoVim nightly repository added"
+fi
+
+print_section "Checking package availability"
+
+# Check if all packages are available in repositories
+UNAVAILABLE_PACKAGES=""
+for package in $(cat "$TEMP_PKG_FILE"); do
+    if ! dnf list --available "$package" &>/dev/null; then
+        UNAVAILABLE_PACKAGES="$UNAVAILABLE_PACKAGES $package"
+    fi
+done
+
+if [ -n "$UNAVAILABLE_PACKAGES" ]; then
+    print_warning "The following packages are not available in current repositories:"
+    for package in $UNAVAILABLE_PACKAGES; do
+        echo "  - $package"
+    done
+    
+    read -p "Do you want to continue with installation of available packages? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        print_error "Installation aborted by user"
+        rm "$TEMP_PKG_FILE"
+        exit 1
+    fi
+    
+    # Create a new file with only available packages
+    AVAILABLE_PKG_FILE=$(mktemp)
+    for package in $(cat "$TEMP_PKG_FILE"); do
+        if dnf list --available "$package" &>/dev/null; then
+            echo "$package" >> "$AVAILABLE_PKG_FILE"
+        fi
+    done
+    
+    print_section "Installing available packages"
+    dnf install -y $(cat "$AVAILABLE_PKG_FILE")
+    rm "$AVAILABLE_PKG_FILE"
+else
+    print_section "Installing all packages"
+    dnf install -y $(cat "$TEMP_PKG_FILE")
+fi
+
+rm "$TEMP_PKG_FILE"
+print_success "Package installation completed"
 
 print_section "Setting up ZSH and related tools"
 
