@@ -1,0 +1,107 @@
+{
+  "modules-left": [
+    "custom/apps",
+    "hyprland/window"
+  ],
+  "modules-center": [
+    "hyprland/workspaces"
+  ],
+  "modules-right": [
+    "tray",
+    "network",
+    "group/hardware",
+    "battery",
+    "pulseaudio",
+    "custom/power",
+    "clock"
+  ],
+  "hyprland/window": {
+    "format": "{}",
+    "rewrite": {
+      "(.*) - Google Chrome": "$1"
+    },
+    "separate-outputs": true
+  },
+  "tray": {
+    "icon-size": 15,
+    "spacing": 10
+  },
+  "clock": {
+    // "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+    // "format-alt": "{:%Y-%m-%d}"
+  },
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-bluetooth": "{volume}% {icon} {format_source}",
+    "format-bluetooth-muted": " {icon} {format_source}",
+    "format-muted": "0% {icon} ",
+    "format-source": "{volume}% ",
+    "format-source-muted": "",
+    "format-icons": {
+      "headphone": "",
+      "hands-free": "",
+      "headset": "",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": [
+        "",
+        "",
+        ""
+      ]
+    },
+    "on-click": "pavucontrol"
+  },
+  "custom/power": {
+    "format": " ",
+    "on-click": "wlogout"
+  },
+  "battery": {
+    "interval": 120,
+    "states": {
+      "warning": 20,
+      "critical": 10
+    },
+    "format": "{icon} {capacity}%",
+    "format-icons": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "max-length": 25
+  },
+  "cpu": {
+    "format": " {usage}%",
+    "interval": 10,
+    "max-length": 10
+  },
+  "memory": {
+    "format": " {percentage}%",
+    "interval": 30,
+    "max-length": 10
+  },
+  "disk": {
+    "format": " {percentage_free}%",
+    "interval": 30
+  },
+  "group/hardware": {
+    "orientation": "inherit",
+    "modules": [
+      "cpu",
+      "memory",
+      "disk"
+    ]
+  },
+  "network": {
+    "interface": "wlp0s20f3",
+    "format": " ",
+    "tooltip-format-wifi": "{essid} ({signalStrength}%)"
+  },
+  "custom/apps": {
+    "format": "",
+    "on-click": "sleep 0.2; pkill wofi; wofi --show drun"
+  },
+  "reload_style_on_change": true
+}

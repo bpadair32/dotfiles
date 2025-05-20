@@ -1,0 +1,104 @@
+@import "/home/bpadair/.cache/wal/colors-waybar.css";
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "JetBrainsMonoNL Nerd Font", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    min-height: 0px;
+    font-weight: bold;
+    font-size: 100%;
+}
+
+window#waybar {
+    background-color: @background;
+    border-radius: 5px;
+    border-bottom: 2px solid @color2;
+    color: @foreground;
+}
+
+tooltip {
+  background-color: @background;
+  border: 1px solid @color3;
+}
+tooltip label {
+  color: @foreground;
+}
+
+#workspaces button {
+  color: @color15;
+  background-color: @background;
+  padding: 0px 5px;
+  margin: 4px 1px;
+  border-radius: 15px;
+  animation: gradient_f 20s ease-in infinite;
+  transition: all 0.5s cubic-bezier(.55, -0.68, .48, 1.682);
+}
+
+#workspaces button.active {
+  color: @color0;
+  border-radius: 15px;
+  background-color: @color4;
+  min-width: 40px;
+  background-size: 400% 400%;
+  opacity: 1;
+  transition: all 0.3s cubic-bezier(.5, -0.68, .48, 1.682);
+}
+
+#workspaces button.focused {
+  color: @color4;
+}
+
+#workspaces button.urgent {
+  color: @color5;
+  border-radius: 10px;
+}
+
+#battery {
+    padding: 10px;
+    border-bottom: 2px solid @color2;
+}
+
+#custom-power {
+  color: @foreground;
+  padding: 10px;
+}
+
+
+#clock {
+    background-color: @background;
+    padding-left: 0px;
+    padding-right: 10px;
+    border-bottom: 2px solid @color2;
+}
+
+#battery {
+    background-color: @background;
+    color: @foreground;
+}
+
+#battery.charging {
+    color: @foreground;
+    background-color: @background;
+}
+
+#cpu {
+  padding-right: 10px;
+}
+
+#memory {
+  padding-right: 10px;
+}
+
+#network {
+  padding-right: 10px;
+}
+
+#custom-apps {
+  padding: 0px 5px 0px 5px;
+  margin: 3px 10px 3px 0px;
+  opacity: 0.8;
+}
+
+#tray {
+  padding-right: 10px;
+}

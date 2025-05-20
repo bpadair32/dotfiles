@@ -1,0 +1,36 @@
+[core]
+    pager = delta
+    excludesfile = $HOME/.gitignore_global
+	sshCommand = ssh -i /home/bpadair/.ssh/id_ecdsa-gh
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true    # use n and N to move between diff sections
+    side-by-side = true
+
+
+    # delta detects terminal colors automatically; set one of these to disable auto-detection
+    # dark = true
+    # light = true
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+  colorMoved = default
+
+# This is Git's per-user configuration file.
+[user]
+# Please adapt and uncomment the following lines:
+	name = Brad Adair
+	email = bradadair@gmail.com
+[color]
+  ui = true
+[pull]
+  rebase = false
+[commit]
+	template = $HOME/.stCommitMsg
+[init]
+	defaultBranch = main
