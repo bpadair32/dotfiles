@@ -7,6 +7,7 @@
     "hyprland/workspaces"
   ],
   "modules-right": [
+    "idle_inhibitor",
     "tray",
     "network",
     "group/hardware",
@@ -15,6 +16,21 @@
     "custom/power",
     "clock"
   ],
+  "hyprland/workspaces": {
+    "format": "{name} - {icon}",
+    "on-click": "activate",
+    "format-icons": {
+      "active": "",
+      "default": ""
+    }
+  },
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+      "activated": "",
+      "deactivated": ""
+    }
+  },
   "hyprland/window": {
     "format": "{}",
     "rewrite": {

@@ -67,6 +67,6 @@ source ~/alias.sh
 source ~/functions.sh
 
 # Set path
-export PATH=$PATH:~/bin:~/.cargo/bin:~/go/bin:$HOME/.krew/bin
+export PATH=$PATH:~/.local/scripts:~/bin:~/.cargo/bin:~/go/bin:$HOME/.krew/bin
 
 . "$HOME/.local/bin/env"
