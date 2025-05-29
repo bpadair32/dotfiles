@@ -34,7 +34,7 @@ tooltip label {
   transition: all 0.5s cubic-bezier(.55, -0.68, .48, 1.682);
 }
 
-#workspaces button.active {
+/*workspaces button.active {
   color: @color0;
   border-radius: 15px;
   background-color: @color4;
@@ -42,11 +42,11 @@ tooltip label {
   background-size: 400% 400%;
   opacity: 1;
   transition: all 0.3s cubic-bezier(.5, -0.68, .48, 1.682);
-}
+}*/
 
-#workspaces button.focused {
+/*#workspaces button.focused {
   color: @color4;
-}
+}*/
 
 #workspaces button.urgent {
   color: @color5;

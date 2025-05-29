@@ -17,10 +17,10 @@
     "clock"
   ],
   "hyprland/workspaces": {
-    "format": "{name} - {icon}",
+    "format": "{icon}",
     "on-click": "activate",
     "format-icons": {
-      "active": "",
+      "active": "",
       "default": ""
     }
   },
