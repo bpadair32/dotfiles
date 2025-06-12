@@ -57,3 +57,14 @@ alias ap=ansible-playbook
 alias fp='fzf --preview="bat --color=always {}"'
 alias fnvim='nvim $(fzf --preview="bat --color=always {}")'
 alias notes='nvim ~/Documents/Notes'
+
+#Some git stuff
+alias gundo='git reset --soft HEAD~1'
+alias glog='git log --oneline -10 --graph --decorate'
+
+#K8s shortcuts
+alias kgp='kubectl get pods'
+alias kgpw='kubectl get pods =o wide'
+alias klogs='kubectl logs -f'
+alias kgs='kubectl get services'
+alias kgi='kubectl get ingress'
