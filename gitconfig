@@ -1,7 +1,6 @@
 [core]
     pager = delta
     excludesfile = $HOME/.gitignore_global
-	sshCommand = ssh -i /home/bpadair/.ssh/id_ecdsa-gh
 
 [interactive]
     diffFilter = delta --color-only
