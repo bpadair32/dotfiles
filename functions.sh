@@ -41,7 +41,7 @@ function obm() {
 }
 
 function fkill() {
-	ps aux | fzf | awk '{ print $2 }'
+	ps aux | fzf | awk '{ print $2 }' | xargs kill -9
 }
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 

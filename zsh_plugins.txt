@@ -11,5 +11,4 @@ ohmyzsh/ohmyzsh path:plugins/ansible
 ohmyzsh/ohmyzsh path:plugins/aws
 ohmyzsh/ohmyzsh path:plugins/colorize
 ohmyzsh/ohmyzsh path:plugins/sudo
-ohmyzsh/ohmyzsh path:plugins/chezmoi
 ohmyzsh/ohmyzsh path:plugins/gitignore
