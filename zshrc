@@ -3,6 +3,9 @@ if [[ ! -d "${ZDOTDIR:-$HOME}/.antidote" ]] then
   git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-$HOME}/.antidote
 fi 
 
+# Set path
+export PATH=$PATH:~/.local/scripts:~/.local/bin:~/bin:~/.cargo/bin:~/go/bin:$HOME/.krew/bin
+
 # Run my greeting script before the instant prompt
 ~/greeting.sh
 
@@ -65,8 +68,5 @@ eval "$(zoxide init zsh)"
 #Include my aliases and functions
 source ~/alias.sh
 source ~/functions.sh
-
-# Set path
-export PATH=$PATH:~/.local/scripts:~/bin:~/.cargo/bin:~/go/bin:$HOME/.krew/bin
 
 . "$HOME/.local/bin/env"
