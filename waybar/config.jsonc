@@ -4,24 +4,28 @@
     "hyprland/workspaces"
   ],
   "modules-center": [
-    "hyprland/window"
+    "hyprland/window",
+    "custom/media"
   ],
   "modules-right": [
-    "idle_inhibitor",
-    "tray",
-    "network",
+    "group/tray",
     "group/hardware",
     "battery",
     "pulseaudio",
+    "clock",
+    "idle_inhibitor",
+    "network",
     "custom/power",
-    "clock"
+    "custom/notification"
   ],
   "hyprland/workspaces": {
-    "format": "{icon}",
+    "format": "{id}",
     "on-click": "activate",
-    "format-icons": {
-      "active": "",
-      "default": ""
+    "on-scroll-down": "hyprctl dispatch workspace e+1",
+    "on-scroll-up": "hyprctl dispatch workspace e-1",
+    "cursor": "pointer",
+    "persistent-workspaces": {
+      "*": 3
     }
   },
   "idle_inhibitor": {
@@ -33,25 +37,37 @@
   },
   "hyprland/window": {
     "format": "{}",
+    "max-length": 40,
     "rewrite": {
-      "(.*) - Google Chrome": "$1"
+      "(.*) — Zen Browser": "🌎 $1"
     },
     "separate-outputs": true
   },
-  "tray": {
-    "icon-size": 15,
-    "spacing": 10
+  "group/tray": {
+    "orientation": "horizontal",
+    "drawer": {
+      "transition-duration": 500,
+      "children-class": "tray-modules"
+    },
+    "modules": [
+      "custom/separator",
+      "tray"
+    ]
+  },
+  "custom/separator": {
+    "format": "|",
+    "tooltip": false
   },
   "clock": {
     // "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
     // "format-alt": "{:%Y-%m-%d}"
   },
   "pulseaudio": {
-    "format": "{icon} {volume}%",
-    "format-bluetooth": "{volume}% {icon} {format_source}",
-    "format-bluetooth-muted": " {icon} {format_source}",
-    "format-muted": "0% {icon} ",
-    "format-source": "{volume}% ",
+    "format": "{icon}  {volume}%",
+    "format-bluetooth": "{icon} {volume}% {format_source}",
+    "format-bluetooth-muted": "{icon} 0% {format_source}",
+    "format-muted": "{icon} 0%",
+    "format-source": " {volume}%",
     "format-source-muted": "",
     "format-icons": {
       "headphone": "",
@@ -70,7 +86,7 @@
   },
   "custom/power": {
     "format": " ",
-    "on-click": "wlogout"
+    "on-click": "~/repos/scripts/power.sh"
   },
   "battery": {
     "interval": 120,
@@ -78,7 +94,7 @@
       "warning": 20,
       "critical": 10
     },
-    "format": "{icon} {capacity}%",
+    "format": "{icon}  {capacity}%",
     "format-icons": [
       "",
       "",
@@ -89,7 +105,7 @@
     "max-length": 25
   },
   "cpu": {
-    "format": " {usage}%",
+    "format": "  {usage}%",
     "interval": 10,
     "max-length": 10
   },
@@ -99,11 +115,15 @@
     "max-length": 10
   },
   "disk": {
-    "format": " {percentage_free}%",
+    "format": "  {percentage_free}%",
     "interval": 30
   },
   "group/hardware": {
     "orientation": "inherit",
+    "drawer": {
+      "transition-duration": 500,
+      "children-class": "hardware-modules"
+    },
     "modules": [
       "cpu",
       "memory",
@@ -117,7 +137,38 @@
   },
   "custom/apps": {
     "format": "",
-    "on-click": "sleep 0.2; pkill wofi; wofi --show drun"
+    "on-click": "sleep 0.2; pkill rofi; rofi -show drun"
+  },
+  "custom/media": {
+    "format": "{icon}{text}",
+    "return-type": "json",
+    "format-icons": {
+      "Playing": " ",
+      "Paused": " "
+    },
+    "max-length": 70,
+    "exec": "playerctl -a metadata --format '{\"text\": \"{{playerName}}: {{artist}} - {{markup_escape(title)}}\", \"tooltip\": \"{{playerName}} : {{markup_escape(title)}}\", \"alt\": \"{{status}}\", \"class\": \"{{status}}\"}' -F",
+    "on-click": "playerctl play-pause"
+  },
+  "custom/notification": {
+    "tooltip": false,
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "<span foreground='red'><sup></sup></span>",
+      "none": "",
+      "dnd-notification": "<span foreground='red'><sup></sup></span>",
+      "dnd-none": "",
+      "inhibited-notification": "<span foreground='red'><sup></sup></span>",
+      "inhibited-none": "",
+      "dnd-inhibited-notification": "<span foreground='red'><sup></sup></span>",
+      "dnd-inhibited-none": ""
+    },
+    "return-type": "json",
+    "exec-if": "which swaync-client",
+    "exec": "swaync-client -swb",
+    "on-click": "swaync-client -t -sw",
+    "on-click-right": "swaync-client -d -sw",
+    "escape": true
   },
   "reload_style_on_change": true
 }

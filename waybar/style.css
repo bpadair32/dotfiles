@@ -1,4 +1,4 @@
-@import "/home/bpadair/.cache/wal/colors-waybar.css";
+@import "colors.css";
 
 * {
     border: none;
@@ -7,94 +7,112 @@
     min-height: 0px;
     font-weight: bold;
     font-size: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 window#waybar {
     background-color: @background;
     border-radius: 5px;
-    border-bottom: 2px solid @color2;
-    color: @foreground;
+    border-bottom: 2px solid @outline;
+    color: @primary;
 }
 
 tooltip {
   background-color: @background;
-  border: 1px solid @color3;
+  border: 1px solid @outline;
 }
 tooltip label {
-  color: @foreground;
+  color: @primary;
+}
+
+#workspaces {
+  min-height: 0;
+  margin: 10px;
+  transition: all 0.3s ease-in-out;
 }
 
 #workspaces button {
-  color: @color15;
-  background-color: @background;
-  padding: 0px 5px;
-  margin: 4px 1px;
-  border-radius: 15px;
-  animation: gradient_f 20s ease-in infinite;
-  transition: all 0.5s cubic-bezier(.55, -0.68, .48, 1.682);
-}
-
-workspaces button.active {
-  color: @color0;
-  border-radius: 15px;
-  background-color: @color5;
+  color: transparent;
+  background: linear-gradient(90deg, @on_primary_fixed_variant 10%, @on_primary_fixed 100%);
+  margin: 0 5px;
+  border-radius: 9999px;
+  transition: all 0.3s ease-in-out;
   min-width: 40px;
-  background-size: 400% 400%;
-  opacity: 1;
-  transition: all 0.3s cubic-bezier(.5, -0.68, .48, 1.682);
 }
 
-/*#workspaces button.focused {
-  color: @color4;
-}*/
 
-#workspaces button.urgent {
-  color: @color5;
-  border-radius: 10px;
+#workspaces button.active {
+  background: linear-gradient(90deg, @on_primary_fixed_variant 0%, @on_primary_fixed 100%);
+  color: transparent;
+  transition: all 0.3s ease-in-out;
+  font-size: 13px;
+  border-radius: 9999px;
+  min-width: 80px;
 }
+
 
 #battery {
-    padding: 10px;
-    border-bottom: 2px solid @color2;
+    padding-right: 5px;
+    padding-left: 5px;
+    border-bottom: 2px solid @outline;
 }
 
 #custom-power {
-  color: @foreground;
-  padding: 10px;
+  color: green;
+  padding-right: 5px;
+  padding-left: 5px;
 }
 
 
 #clock {
     background-color: @background;
-    padding-left: 0px;
+    color: @secondary;
+    border-bottom: 2px solid @outline;
     padding-right: 10px;
-    border-bottom: 2px solid @color2;
+    padding-left: 10px;
 }
 
 #battery {
     background-color: @background;
-    color: @foreground;
+    color: @primary;
 }
 
 #battery.charging {
-    color: @foreground;
+    color: @primary;
     background-color: @background;
+}
+
+#pulseaudio {
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+#custom-media {
+  padding-right: 20px;
+  padding-left: 20px;
+  color: @secondary;
 }
 
 #cpu {
   padding-right: 10px;
+  padding-left: 10px;
 }
 
 #memory {
   padding-right: 10px;
+  padding-left: 10px;
 }
 
 #network {
   padding-right: 10px;
+  padding-left: 10px;
+  color: cyan;
 }
 
 #custom-apps {
-  padding: 0px 5px 0px 5px;
+  padding-right: 5px;
+  padding-left: 5px;
   margin: 3px 10px 3px 0px;
   opacity: 0.8;
 }
@@ -105,5 +123,12 @@ workspaces button.active {
 
 #idle_inhibitor {
   padding-right: 15px;
-  font-size: 1.1em
+  font-size: 1.1em;
+  color: white;
+}
+
+#custom-notification {
+  padding-right: 10px;
+  padding-left: 10px;
+  color: yellow;
 }

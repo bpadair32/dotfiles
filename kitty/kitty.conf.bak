@@ -18,29 +18,29 @@ background_blur 64
 
 # Theme (approximately matching alabaster_dark)
 # You may want to fine-tune these colors
-# foreground #cccccc
-# background #0e1415
-# cursor #cccccc
+foreground #cccccc
+background #0e1415
+cursor #cccccc
 
 # Normal colors
-# color0 #000000
-# color1 #e25d56
-# color2 #73ca50
-# color3 #e9bf57
-# color4 #4a88e4
-# color5 #915caf
-# color6 #23acdd
-# color7 #cccccc
+color0 #000000
+color1 #e25d56
+color2 #73ca50
+color3 #e9bf57
+color4 #4a88e4
+color5 #915caf
+color6 #23acdd
+color7 #cccccc
 
 # Bright colors
-# color8 #676767
-# color9 #f36868
-# color10 #88db3f
-# color11 #f0bf7a
-# color12 #6f8fdb
-# color13 #e987e9
-# color14 #4ed9e9
-# color15 #f5f5f5
+color8 #676767
+color9 #f36868
+color10 #88db3f
+color11 #f0bf7a
+color12 #6f8fdb
+color13 #e987e9
+color14 #4ed9e9
+color15 #f5f5f5
 
 # Advanced settings
 allow_remote_control yes
@@ -52,9 +52,3 @@ debug_keyboard yes
 debug_font_fallback yes
 
 include colors.conf
-
-
-# BEGIN_KITTY_THEME
-# Your-Theme
-include current-theme.conf
-# END_KITTY_THEME
