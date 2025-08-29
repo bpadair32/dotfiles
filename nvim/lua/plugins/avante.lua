@@ -1,9 +1,28 @@
 return {
   "yetone/avante.nvim",
-  build = "make",
+  -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
+  -- ⚠️ must add this setting! ! !
+  build = vim.fn.has("win32") ~= 0 and "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false"
+    or "make",
   event = "VeryLazy",
+  version = false, -- Never set this value to "*"! Never!
+  ---@module 'avante'
+  ---@type avante.Config
   opts = {
-    provider = "claude",
+    -- add any opts here
+    -- for example
+    provider = "litellm",
+    providers = {
+      litellm = {
+        __inherited_from = "openai",
+        endpoint = "https://litellm.adair.cloud",
+        api_key_name = "AVANTE_LITELLM_APIKEY",
+        model = "claude-3-5-haiku-latest",
+        extra_request_body = {
+          max_tokens = 8192,
+        },
+      },
+    },
   },
   dependencies = {
     "nvim-lua/plenary.nvim",
