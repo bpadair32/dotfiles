@@ -15,7 +15,7 @@ window#waybar {
     background-color: @background;
     border-radius: 5px;
     border-bottom: 2px solid @outline;
-    color: @primary;
+    color: @on_surface;
 }
 
 tooltip {
@@ -23,7 +23,7 @@ tooltip {
   border: 1px solid @outline;
 }
 tooltip label {
-  color: @primary;
+  color: @on_surface;
 }
 
 #workspaces {
@@ -75,11 +75,11 @@ tooltip label {
 
 #battery {
     background-color: @background;
-    color: @primary;
+    color: @on_surface;
 }
 
 #battery.charging {
-    color: @primary;
+    color: @on_surface;
     background-color: @background;
 }
 
@@ -115,6 +115,7 @@ tooltip label {
   padding-left: 5px;
   margin: 3px 10px 3px 0px;
   opacity: 0.8;
+  font-size: 20px;
 }
 
 #tray {
