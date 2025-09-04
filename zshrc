@@ -62,6 +62,8 @@ eval "$(fzf --zsh)"
 
 # Configure fzf 
 export FZF_DEFAULT_COMMAND='fd . --hidden --exclude ".git"'
+export FZF_DEFAULT_OPTS="--style minimal --color 16 --layout=reverse --height 40% --preview='bat -p --color=always {}'"
+export FZF_CTRL_R_OPTS="--style minimal --color 16 --info inline --no-sort --no-preview"
 # Include zoxide
 eval "$(zoxide init zsh)"
 

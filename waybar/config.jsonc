@@ -136,7 +136,7 @@
     "tooltip-format-wifi": "{essid} ({signalStrength}%)"
   },
   "custom/apps": {
-    "format": "",
+    "format": "",
     "on-click": "sleep 0.2; pkill rofi; rofi -show drun"
   },
   "custom/media": {
@@ -146,7 +146,7 @@
       "Playing": " ",
       "Paused": " "
     },
-    "max-length": 70,
+    "max-length": 50,
     "exec": "playerctl -a metadata --format '{\"text\": \"{{playerName}}: {{artist}} - {{markup_escape(title)}}\", \"tooltip\": \"{{playerName}} : {{markup_escape(title)}}\", \"alt\": \"{{status}}\", \"class\": \"{{status}}\"}' -F",
     "on-click": "playerctl play-pause"
   },
