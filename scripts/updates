@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+#
+# updates - Display available system updates for Waybar
+#
+# Shows total count of flatpak + dnf updates with color-coded urgency
+# Output format: JSON for Waybar custom module
+#
+
+set -euo pipefail
+
+# Cache settings
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/waybar-updates"
+CACHE_FILE="$CACHE_DIR/updates.json"
+CACHE_MAX_AGE=7200  # 2 hours
+
+mkdir -p "$CACHE_DIR"
+
+# Check if cache is fresh
+cache_is_fresh() {
+    if [[ -f "$CACHE_FILE" ]]; then
+        local age=$(($(date +%s) - $(stat -c %Y "$CACHE_FILE")))
+        [[ $age -lt $CACHE_MAX_AGE ]]
+    else
+        return 1
+    fi
+}
+
+# Count flatpak updates
+get_flatpak_updates() {
+    if command -v flatpak &>/dev/null; then
+        flatpak remote-ls --updates 2>/dev/null | wc -l
+    else
+        echo 0
+    fi
+}
+
+# Count dnf updates
+get_dnf_updates() {
+    if command -v dnf &>/dev/null; then
+        # dnf check-update returns exit code 100 if updates available, 0 if none
+        # We need to count the lines, excluding the header
+        local output
+        output=$(dnf check-update 2>/dev/null | tail -n +2 | grep -v "^$" | wc -l) || true
+        echo "$output"
+    else
+        echo 0
+    fi
+}
+
+# Main
+main() {
+    local flatpak_count dnf_count total class
+
+    # Check cache first
+    if cache_is_fresh; then
+        cat "$CACHE_FILE"
+        return
+    fi
+
+    # Get update counts
+    flatpak_count=$(get_flatpak_updates)
+    dnf_count=$(get_dnf_updates)
+    total=$((flatpak_count + dnf_count))
+
+    # Determine class based on total
+    if [[ $total -le 10 ]]; then
+        class="normal"
+    elif [[ $total -le 25 ]]; then
+        class="warning"
+    else
+        class="critical"
+    fi
+
+    # Build tooltip
+    local tooltip
+    tooltip="System Updates\n"
+    tooltip+="────────────────────\n"
+    tooltip+="DNF:     ${dnf_count}\n"
+    tooltip+="Flatpak: ${flatpak_count}\n"
+    tooltip+="────────────────────\n"
+    tooltip+="Total:   ${total}"
+
+    # Escape for JSON
+    local tooltip_escaped
+    tooltip_escaped=$(echo -e "$tooltip" | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|/\\n/g')
+
+    # Build output
+    local output
+    local icon="󰏗"  # nf-md-package_up
+    if [[ $total -eq 0 ]]; then
+        output="{\"text\": \"\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${class}\"}"
+    else
+        output="{\"text\": \"${icon} ${total}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${class}\"}"
+    fi
+
+    # Cache result
+    echo "$output" > "$CACHE_FILE"
+
+    echo "$output"
+}
+
+main "$@"
