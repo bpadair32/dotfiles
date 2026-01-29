@@ -134,3 +134,48 @@ tooltip label {
   padding-left: 10px;
   color: @waybar_notification;
 }
+
+#custom-weather {
+  padding-right: 10px;
+  padding-left: 10px;
+  color: @secondary;
+}
+
+#custom-weather.warning {
+  color: @tertiary;
+}
+
+#custom-weather.danger {
+  color: @error;
+}
+
+#custom-weather.error {
+  color: @outline;
+}
+
+#custom-claude {
+  padding-right: 10px;
+  padding-left: 10px;
+  color: @tertiary;
+}
+
+#custom-claude.critical {
+  color: @error;
+}
+
+#custom-claude.warning {
+  color: @tertiary;
+}
+
+#custom-claude.medium {
+  color: @secondary;
+}
+
+#custom-claude.normal {
+  color: @on_surface;
+}
+
+#custom-claude.disconnected,
+#custom-claude.error {
+  color: @outline;
+}

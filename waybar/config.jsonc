@@ -9,6 +9,8 @@
   ],
   "modules-right": [
     "group/tray",
+    "custom/weather",
+    "custom/claude",
     "group/hardware",
     "battery",
     "pulseaudio",
@@ -149,6 +151,22 @@
     "max-length": 50,
     "exec": "playerctl -a metadata --format '{\"text\": \"{{playerName}}: {{artist}} - {{markup_escape(title)}}\", \"tooltip\": \"{{playerName}} : {{markup_escape(title)}}\", \"alt\": \"{{status}}\", \"class\": \"{{status}}\"}' -F",
     "on-click": "playerctl play-pause"
+  },
+  "custom/weather": {
+    "format": "{}",
+    "return-type": "json",
+    "interval": 600,
+    "exec": "~/repos/dotfiles/scripts/weather",
+    "on-click": "xdg-open 'https://wttr.in'",
+    "tooltip": true
+  },
+  "custom/claude": {
+    "format": "{}",
+    "return-type": "json",
+    "interval": 60,
+    "exec": "~/repos/dotfiles/scripts/claude-usage",
+    "on-click": "kitty --class floating -e bash -c 'cat ~/.claude/stats-cache.json | jq . | less'",
+    "tooltip": true
   },
   "custom/notification": {
     "tooltip": false,

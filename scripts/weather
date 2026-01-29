@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+#
+# weather - Display current weather for Waybar
+#
+# Shows weather icon, temperature, and alerts from wttr.in + NWS
+# Output format: JSON for Waybar custom module
+#
+
+set -euo pipefail
+
+# Configuration - customize these
+LOCATION="40.1842,-82.8838"  # Galena, OH coordinates
+LOCATION_NAME="Galena, OH"   # Display name override
+UNITS="F"                     # F or C
+
+# Cache settings (avoid hitting API too frequently)
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/waybar-weather"
+CACHE_FILE="$CACHE_DIR/weather.json"
+ALERTS_CACHE="$CACHE_DIR/alerts.json"
+CACHE_MAX_AGE=600  # 10 minutes
+
+mkdir -p "$CACHE_DIR"
+
+# Check if cache is fresh
+cache_is_fresh() {
+    local file="$1"
+    local max_age="$2"
+    if [[ -f "$file" ]]; then
+        local age=$(($(date +%s) - $(stat -c %Y "$file")))
+        [[ $age -lt $max_age ]]
+    else
+        return 1
+    fi
+}
+
+# Weather code to icon mapping (wttr.in codes)
+# Using nerd font weather icons
+get_weather_icon() {
+    local code="$1"
+    case "$code" in
+        113) echo "☀️" ;;   # Sunny/Clear
+        116) echo "⛅" ;;   # Partly cloudy
+        119) echo "☁️" ;;   # Cloudy
+        122) echo "☁️" ;;   # Overcast
+        143|248|260) echo "🌫️" ;;  # Fog/Mist
+        176|263|266|293|296|353) echo "🌦️" ;;  # Light rain/drizzle
+        179|182|185|281|284|311|314|317) echo "🌨️" ;;  # Sleet/freezing
+        200) echo "⛈️" ;;   # Thunderstorm
+        227|230) echo "🌬️" ;;  # Blowing snow
+        299|302|305|308|356|359) echo "🌧️" ;;  # Heavy rain
+        320|323|326|329|332|335|338|350) echo "❄️" ;;  # Snow
+        368|371|374|377) echo "🌨️" ;;  # Snow showers
+        386|389|392|395) echo "⛈️" ;;  # Thunder with rain/snow
+        *) echo "🌡️" ;;  # Default
+    esac
+}
+
+# Get alert severity icon
+get_alert_icon() {
+    local severity="$1"
+    local event="$2"
+
+    # Check if it's a warning (most severe)
+    if [[ "$severity" == "Extreme" ]] || [[ "$severity" == "Severe" ]] || \
+       [[ "$event" == *"Warning"* ]]; then
+        echo "🚨"  # Danger icon
+    # Watch or advisory
+    elif [[ "$event" == *"Watch"* ]] || [[ "$event" == *"Advisory"* ]] || \
+         [[ "$severity" == "Moderate" ]]; then
+        echo "⚠️"  # Warning triangle
+    else
+        echo "ℹ️"  # Info
+    fi
+}
+
+# Fetch weather data
+fetch_weather() {
+    if cache_is_fresh "$CACHE_FILE" "$CACHE_MAX_AGE"; then
+        cat "$CACHE_FILE"
+        return
+    fi
+
+    local weather
+    weather=$(curl -sf "wttr.in/${LOCATION}?format=j1" 2>/dev/null) || return 1
+
+    if [[ -n "$weather" ]]; then
+        echo "$weather" > "$CACHE_FILE"
+        echo "$weather"
+    fi
+}
+
+# Fetch alerts from NWS (US only)
+fetch_alerts() {
+    if cache_is_fresh "$ALERTS_CACHE" "$CACHE_MAX_AGE"; then
+        cat "$ALERTS_CACHE"
+        return
+    fi
+
+    # Get coordinates from weather data
+    local weather="$1"
+    local lat lon
+    lat=$(echo "$weather" | jq -r '.nearest_area[0].latitude')
+    lon=$(echo "$weather" | jq -r '.nearest_area[0].longitude')
+
+    if [[ -z "$lat" ]] || [[ -z "$lon" ]]; then
+        echo '{"features":[]}' > "$ALERTS_CACHE"
+        echo '{"features":[]}'
+        return
+    fi
+
+    local alerts
+    alerts=$(curl -sf "https://api.weather.gov/alerts/active?point=${lat},${lon}" \
+        -H "User-Agent: waybar-weather/1.0" 2>/dev/null) || alerts='{"features":[]}'
+
+    echo "$alerts" > "$ALERTS_CACHE"
+    echo "$alerts"
+}
+
+# Main
+main() {
+    # Check for jq
+    if ! command -v jq &>/dev/null; then
+        echo '{"text": "🌡️ ?", "tooltip": "Error: jq not installed", "class": "error"}'
+        exit 0
+    fi
+
+    # Fetch weather
+    local weather
+    weather=$(fetch_weather) || {
+        echo '{"text": "🌡️ --", "tooltip": "Weather: API error", "class": "error"}'
+        exit 0
+    }
+
+    if [[ -z "$weather" ]]; then
+        echo '{"text": "🌡️ --", "tooltip": "Weather: No data", "class": "error"}'
+        exit 0
+    fi
+
+    # Parse current conditions
+    local current
+    current=$(echo "$weather" | jq -r '.current_condition[0]')
+
+    local temp humidity feels_like weather_code weather_desc
+    if [[ "$UNITS" == "C" ]]; then
+        temp=$(echo "$current" | jq -r '.temp_C')
+        feels_like=$(echo "$current" | jq -r '.FeelsLikeC')
+    else
+        temp=$(echo "$current" | jq -r '.temp_F')
+        feels_like=$(echo "$current" | jq -r '.FeelsLikeF')
+    fi
+    humidity=$(echo "$current" | jq -r '.humidity')
+    weather_code=$(echo "$current" | jq -r '.weatherCode')
+    weather_desc=$(echo "$current" | jq -r '.weatherDesc[0].value')
+
+    # Get weather icon
+    local weather_icon
+    weather_icon=$(get_weather_icon "$weather_code")
+
+    # Fetch alerts
+    local alerts alert_count alert_text alert_icon alert_class
+    alerts=$(fetch_alerts "$weather")
+    alert_count=$(echo "$alerts" | jq -r '.features | length')
+    alert_text=""
+    alert_icon=""
+    alert_class="normal"
+
+    if [[ "$alert_count" -gt 0 ]]; then
+        # Get most severe alert
+        local severity event headline
+        severity=$(echo "$alerts" | jq -r '.features[0].properties.severity // "Unknown"')
+        event=$(echo "$alerts" | jq -r '.features[0].properties.event // "Alert"')
+        headline=$(echo "$alerts" | jq -r '.features[0].properties.headline // "Weather alert active"')
+
+        alert_icon=$(get_alert_icon "$severity" "$event")
+        alert_text="$headline"
+
+        # Set class based on severity
+        if [[ "$event" == *"Warning"* ]] || [[ "$severity" == "Extreme" ]] || [[ "$severity" == "Severe" ]]; then
+            alert_class="danger"
+        else
+            alert_class="warning"
+        fi
+    fi
+
+    # Build display text
+    local text
+    if [[ -n "$alert_icon" ]]; then
+        text="${weather_icon} ${temp}°${UNITS} ${alert_icon}"
+    else
+        text="${weather_icon} ${temp}°${UNITS}"
+    fi
+
+    # Build tooltip
+    local tooltip
+    if [[ -n "$alert_text" ]]; then
+        tooltip="${alert_icon} ALERT: ${alert_text}\n"
+        tooltip+="────────────────────\n"
+    fi
+    tooltip+="${LOCATION_NAME}\n"
+    tooltip+="${weather_desc}\n"
+    tooltip+="────────────────────\n"
+    tooltip+="Temperature: ${temp}°${UNITS}\n"
+    tooltip+="Feels Like:  ${feels_like}°${UNITS}\n"
+    tooltip+="Humidity:    ${humidity}%"
+
+    # Escape for JSON
+    local tooltip_escaped
+    tooltip_escaped=$(echo -e "$tooltip" | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|/\\n/g')
+
+    # Output JSON
+    echo "{\"text\": \"${text}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${alert_class}\"}"
+}
+
+main "$@"
