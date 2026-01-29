@@ -1,0 +1,22 @@
+# Core CLI tools
+zsh
+git
+curl
+wget
+jq
+htop
+ncdu
+tar
+unzip
+fzf
+fd-find
+bat
+eza
+ripgrep
+zoxide
+tmux
+neovim
+figlet
+lolcat
+fastfetch
+gettext

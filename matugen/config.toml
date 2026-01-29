@@ -1,0 +1,39 @@
+[config.wallpaper]
+command = "swww"
+arguments = [
+  "img",
+  "--transition-type",
+  "center",
+  "--transition-step",
+  "1",
+  "--transition-fps",
+  "60",
+]
+set = true
+
+[templates.hyprland]
+input_path = "./templates/hyprland-colors.conf"
+output_path = "~/.config/hypr/colors.conf"
+post_hook = 'hyprctl reload'
+
+[templates.waybar]
+input_path = "./templates/colors.css"
+output_path = "~/.config/waybar/colors.css"
+post_hook = "pkill -SIGUSR2 waybar"
+
+[templates.kitty]
+input_path = "./templates/kitty-colors.conf"
+output_path = "~/.config/kitty/current-theme.conf"
+
+[templates.wlogout]
+input_path = "./templates/colors.css"
+output_path = "~/.config/wlogout/colors.css"
+
+[templates.rofi]
+input_path = "./templates/rofi-colors.rasi"
+output_path = "~/.config/rofi/colors.rasi"
+
+[templates.swaync]
+input_path = "./templates/colors.css"
+output_path = "~/.config/swaync/colors.css"
+post_hook = "swaync-client --reload-css"

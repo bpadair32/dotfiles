@@ -1,0 +1,5 @@
+# Desktop applications
+kitty
+nextcloud-client
+yazi
+pavucontrol

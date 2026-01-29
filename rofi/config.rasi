@@ -1,4 +1,4 @@
-@import "~/.cache/wal/colors-rofi.rasi"
+@import "colors.rasi"
 configuration {
   display-drun: "Applications";
   display-window: "Windows";

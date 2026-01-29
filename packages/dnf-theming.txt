@@ -1,0 +1,4 @@
+# Theming packages
+papirus-icon-theme
+adwaita-icon-theme
+breeze-icon-theme

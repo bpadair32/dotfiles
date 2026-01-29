@@ -1,0 +1,6 @@
+# Audio/media packages
+pipewire
+wireplumber
+pipewire-pulseaudio
+mpd
+mpd-mpris

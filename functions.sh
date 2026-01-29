@@ -52,3 +52,12 @@ function k8exec() {
 function testpost() {
 	nc -zv $1 $2
 }
+
+# Theme switching
+function theme() {
+	~/repos/dotfiles/scripts/theme-switch "$@"
+}
+
+function themes() {
+	theme --list
+}

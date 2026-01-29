@@ -1,0 +1,13 @@
+/*
+ * CSS Colors - Generated with Matugen
+ */
+<* for name, value in colors *>
+@define-color {{name}} {{value.default.hex}};
+<* endfor *>
+
+/* Waybar icon colors - mapped from Material Design tokens */
+@define-color waybar_power {{colors.tertiary.default.hex}};
+@define-color waybar_network {{colors.secondary.default.hex}};
+@define-color waybar_apps {{colors.primary.default.hex}};
+@define-color waybar_idle {{colors.on_surface.default.hex}};
+@define-color waybar_notification {{colors.tertiary.default.hex}};

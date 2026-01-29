@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+#
+# theme-selector - Rofi theme selector with wallpaper previews
+#
+# Outputs themes in rofi script mode format with wallpaper icons
+
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/repos/dotfiles}"
+THEMES_DIR="$DOTFILES_DIR/themes"
+CURRENT_FILE="$DOTFILES_DIR/.current-theme"
+WALLPAPERS_DIR="$HOME/Pictures/wallpapers"
+
+# Get current theme
+current=""
+if [[ -f "$CURRENT_FILE" ]]; then
+    current=$(cat "$CURRENT_FILE")
+fi
+
+# Function to show wallpaper picker and apply dynamic theme
+apply_dynamic_theme() {
+    local generator="$1"  # pywal or matugen
+
+    # Create a temporary script to run the wallpaper picker
+    local tmp_script=$(mktemp)
+    cat > "$tmp_script" << 'PICKER_EOF'
+#!/usr/bin/env bash
+WALLPAPERS_DIR="$1"
+DOTFILES_DIR="$2"
+generator="$3"
+
+# Debug log
+exec &>> /tmp/theme-picker.log
+echo "=== $(date) ==="
+echo "Generator: $generator"
+echo "WALLPAPERS_DIR: $WALLPAPERS_DIR"
+echo "DOTFILES_DIR: $DOTFILES_DIR"
+echo "PATH before: $PATH"
+
+# Ensure user local bins are in PATH
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+echo "PATH after: $PATH"
+echo "wal location: $(which wal 2>&1)"
+
+sleep 0.2  # Let rofi close
+
+# Build wallpaper list with icons for rofi
+wallpaper_list=""
+while IFS= read -r img; do
+    name=$(basename "$img")
+    wallpaper_list+="${name}\0icon\x1f${img}\n"
+done < <(find "$WALLPAPERS_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) 2>/dev/null | sort)
+
+# Launch wallpaper picker rofi
+selected_wallpaper=$(echo -en "$wallpaper_list" | rofi -dmenu -show-icons -i -p "Wallpaper" \
+    -theme-str 'window { width: 600px; } listview { lines: 4; columns: 2; } element { orientation: vertical; padding: 10px; } element-icon { size: 150px; horizontal-align: 0.5; } element-text { horizontal-align: 0.5; }')
+
+# If user cancelled, exit
+if [[ -z "$selected_wallpaper" ]]; then
+    echo "User cancelled wallpaper selection"
+    exit 0
+fi
+
+echo "Selected wallpaper: $selected_wallpaper"
+
+# Find the full path of the selected wallpaper
+wallpaper_path=$(find "$WALLPAPERS_DIR" -type f -name "$selected_wallpaper" 2>/dev/null | head -1)
+
+echo "Wallpaper path: $wallpaper_path"
+
+if [[ -z "$wallpaper_path" ]]; then
+    echo "ERROR: Could not find wallpaper path"
+    exit 1
+fi
+
+# Apply the theme
+echo "Running theme-switch --$generator $wallpaper_path"
+if [[ "$generator" == "pywal" ]]; then
+    "$DOTFILES_DIR/scripts/theme-switch" --pywal "$wallpaper_path" 2>&1
+else
+    "$DOTFILES_DIR/scripts/theme-switch" --matugen "$wallpaper_path" 2>&1
+fi
+echo "theme-switch exit code: $?"
+PICKER_EOF
+    chmod +x "$tmp_script"
+
+    # Run the picker script completely detached
+    setsid "$tmp_script" "$WALLPAPERS_DIR" "$DOTFILES_DIR" "$generator" &>/dev/null &
+
+    exit 0
+}
+
+# If an argument is passed, a selection was made
+if [[ -n "${1:-}" ]]; then
+    # Strip any marker characters from the selection
+    selection="${1#\* }"
+    selection="${selection#🎨 }"
+
+    # Check if it's a dynamic theme generator
+    case "$selection" in
+        "pywal")
+            apply_dynamic_theme "pywal"
+            ;;
+        "matugen")
+            apply_dynamic_theme "matugen"
+            ;;
+        *)
+            # Regular theme - apply it
+            "$DOTFILES_DIR/scripts/theme-switch" "$selection" &>/dev/null &
+            exit 0
+            ;;
+    esac
+fi
+
+# List static themes with icons
+for theme_dir in "$THEMES_DIR"/*/; do
+    [[ "$theme_dir" == *"_dynamic"* ]] && continue
+    [[ ! -f "$theme_dir/theme.toml" ]] && continue
+
+    name=$(basename "$theme_dir")
+
+    # Get wallpaper path from theme.toml
+    wallpaper=$(grep -oP '^wallpaper = "\K[^"]+' "$theme_dir/theme.toml" 2>/dev/null || echo "")
+
+    # Resolve wallpaper path
+    icon_path=""
+    if [[ -n "$wallpaper" ]]; then
+        if [[ -f "$theme_dir/$wallpaper" ]]; then
+            icon_path="$theme_dir/$wallpaper"
+        fi
+    fi
+
+    # Add marker for current theme
+    display_name="$name"
+    if [[ "$name" == "$current" ]]; then
+        display_name="* $name"
+    fi
+
+    # Output in rofi script format with icon
+    if [[ -n "$icon_path" ]]; then
+        echo -en "$display_name\0icon\x1f$icon_path\n"
+    else
+        echo "$display_name"
+    fi
+done
+
+# Add dynamic theme generators with a visual distinction
+echo -en "pywal\0icon\x1fcolor-picker\n"
+echo -en "matugen\0icon\x1fcolor-picker\n"

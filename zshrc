@@ -72,3 +72,8 @@ source ~/alias.sh
 source ~/functions.sh
 
 . "$HOME/.local/bin/env"
+
+# opencode
+export PATH=/home/bpadair/.opencode/bin:$PATH
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
