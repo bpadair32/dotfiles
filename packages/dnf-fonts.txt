@@ -1,0 +1,5 @@
+# Font packages
+fira-code-fonts
+fontawesome-fonts
+fontawesome6-fonts-all
+google-noto-sans-fonts

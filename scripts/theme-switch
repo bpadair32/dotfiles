@@ -1,0 +1,588 @@
+#!/usr/bin/env bash
+#
+# theme-switch - Unified theme switching for Hyprland desktop
+#
+# Usage:
+#   theme-switch <theme-name>      Apply named theme
+#   theme-switch --pywal [image]   Generate from wallpaper using pywal
+#   theme-switch --matugen [image] Generate Material You colors using matugen
+#   theme-switch --list            List available themes
+#   theme-switch --current         Show current theme
+#   theme-switch --save <name>     Save current dynamic theme as static
+
+set -euo pipefail
+
+# Configuration
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/repos/dotfiles}"
+THEMES_DIR="$DOTFILES_DIR/themes"
+TEMPLATES_DIR="$DOTFILES_DIR/templates"
+DYNAMIC_DIR="$THEMES_DIR/_dynamic"
+CURRENT_FILE="$DOTFILES_DIR/.current-theme"
+
+# Target config locations
+HYPR_COLORS="$HOME/.config/hypr/colors.conf"
+WAYBAR_COLORS="$HOME/.config/waybar/colors.css"
+WLOGOUT_COLORS="$HOME/.config/wlogout/colors.css"
+SWAYNC_COLORS="$HOME/.config/swaync/colors.css"
+KITTY_COLORS="$HOME/.config/kitty/current-theme.conf"
+ROFI_COLORS="$HOME/.config/rofi/colors.rasi"
+DUNST_COLORS="$HOME/.config/dunst/colors.conf"
+GTK3_CSS="$HOME/.config/gtk-3.0/colors.css"
+GTK4_CSS="$HOME/.config/gtk-4.0/colors.css"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+log() { echo -e "${GREEN}[theme-switch]${NC} $*"; }
+warn() { echo -e "${YELLOW}[theme-switch]${NC} $*"; }
+error() { echo -e "${RED}[theme-switch]${NC} ERROR: $*" >&2; exit 1; }
+
+# Track exported variables for envsubst
+EXPORTED_VARS=""
+
+# Parse TOML file and export as environment variables
+parse_theme_toml() {
+    local theme_file="$1"
+    local section=""
+    EXPORTED_VARS=""
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Skip comments and empty lines
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${line// }" ]] && continue
+
+        # Detect section headers
+        if [[ "$line" =~ ^\[([a-z_.]+)\] ]]; then
+            section="${BASH_REMATCH[1]}"
+            continue
+        fi
+
+        # Parse key = "value" or key = value
+        if [[ "$line" =~ ^[[:space:]]*([a-z_0-9]+)[[:space:]]*=[[:space:]]*\"?([^\"]+)\"? ]]; then
+            local key="${BASH_REMATCH[1]}"
+            local value="${BASH_REMATCH[2]}"
+            value="${value%\"}"  # Remove trailing quote if present
+
+            # Convert to uppercase and export
+            local export_key
+            case "$section" in
+                "meta")
+                    export_key="THEME_${key^^}"
+                    ;;
+                "colors")
+                    export_key="${key^^}"
+                    # Also create stripped version (without #)
+                    local stripped="${value#\#}"
+                    export "${key^^}_STRIPPED=$stripped"
+                    EXPORTED_VARS="$EXPORTED_VARS \${${key^^}_STRIPPED}"
+                    ;;
+                "colors.terminal")
+                    export_key="${key^^}"
+                    ;;
+                "colors.waybar")
+                    export_key="WAYBAR_${key^^}"
+                    ;;
+                *)
+                    continue
+                    ;;
+            esac
+            export "$export_key=$value"
+            EXPORTED_VARS="$EXPORTED_VARS \${$export_key}"
+        fi
+    done < "$theme_file"
+}
+
+# Process a template file with envsubst
+process_template() {
+    local template="$1"
+    local output="$2"
+
+    if [[ -f "$template" ]]; then
+        # Create output directory if needed
+        mkdir -p "$(dirname "$output")"
+        # Only substitute our exported variables, not all $variables
+        envsubst "$EXPORTED_VARS" < "$template" > "$output"
+        log "Generated: $output"
+    else
+        warn "Template not found: $template"
+    fi
+}
+
+# Set GTK theme via gsettings and INI files
+set_gtk_theme() {
+    local gtk_theme="${THEME_GTK_THEME:-Adwaita-dark}"
+    local icon_theme="${THEME_ICON_THEME:-breeze-dark}"
+    local cursor_theme="${THEME_CURSOR_THEME:-default}"
+
+    # gsettings (for GNOME/GTK apps)
+    if command -v gsettings &>/dev/null; then
+        gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface icon-theme "$icon_theme" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" 2>/dev/null || true
+        log "GTK theme set: $gtk_theme"
+    fi
+
+    # Update GTK 3 settings.ini
+    local gtk3_ini="$HOME/.config/gtk-3.0/settings.ini"
+    if [[ -f "$gtk3_ini" ]]; then
+        sed -i "s/^gtk-theme-name=.*/gtk-theme-name=$gtk_theme/" "$gtk3_ini" 2>/dev/null || true
+        sed -i "s/^gtk-icon-theme-name=.*/gtk-icon-theme-name=$icon_theme/" "$gtk3_ini" 2>/dev/null || true
+        sed -i "s/^gtk-cursor-theme-name=.*/gtk-cursor-theme-name=$cursor_theme/" "$gtk3_ini" 2>/dev/null || true
+    fi
+
+    # Update GTK 4 settings.ini
+    local gtk4_ini="$HOME/.config/gtk-4.0/settings.ini"
+    if [[ -f "$gtk4_ini" ]]; then
+        sed -i "s/^gtk-theme-name=.*/gtk-theme-name=$gtk_theme/" "$gtk4_ini" 2>/dev/null || true
+        sed -i "s/^gtk-icon-theme-name=.*/gtk-icon-theme-name=$icon_theme/" "$gtk4_ini" 2>/dev/null || true
+        sed -i "s/^gtk-cursor-theme-name=.*/gtk-cursor-theme-name=$cursor_theme/" "$gtk4_ini" 2>/dev/null || true
+    fi
+}
+
+# Set wallpaper using swww
+set_wallpaper() {
+    local wallpaper="$1"
+    local theme_dir="$2"
+
+    if [[ -z "$wallpaper" ]] || [[ "$wallpaper" == "null" ]]; then
+        return
+    fi
+
+    # Resolve relative paths
+    if [[ ! "$wallpaper" = /* ]]; then
+        # Check theme directory first
+        if [[ -f "$theme_dir/$wallpaper" ]]; then
+            wallpaper="$theme_dir/$wallpaper"
+        elif [[ -f "$HOME/Pictures/Wallpapers/$wallpaper" ]]; then
+            wallpaper="$HOME/Pictures/Wallpapers/$wallpaper"
+        elif [[ -f "$DOTFILES_DIR/$wallpaper" ]]; then
+            wallpaper="$DOTFILES_DIR/$wallpaper"
+        fi
+    fi
+
+    if [[ -f "$wallpaper" ]] && command -v swww &>/dev/null; then
+        swww img "$wallpaper" \
+            --transition-type center \
+            --transition-step 1 \
+            --transition-fps 60 2>/dev/null || true
+        log "Wallpaper set: $(basename "$wallpaper")"
+    fi
+}
+
+# Reload applications to apply new colors
+reload_apps() {
+    # Hyprland
+    if command -v hyprctl &>/dev/null; then
+        hyprctl reload &>/dev/null || true
+        log "Reloaded: Hyprland"
+    fi
+
+    # Waybar
+    if pgrep -x waybar &>/dev/null; then
+        pkill -SIGUSR2 waybar 2>/dev/null || true
+        log "Reloaded: Waybar"
+    fi
+
+    # Swaync
+    if command -v swaync-client &>/dev/null; then
+        swaync-client --reload-css &>/dev/null || true
+        log "Reloaded: Swaync"
+    fi
+
+    # Dunst (requires restart)
+    if pgrep -x dunst &>/dev/null; then
+        killall dunst 2>/dev/null || true
+        dunst &>/dev/null &
+        disown
+        log "Restarted: Dunst"
+    fi
+}
+
+# Apply a theme from a theme directory
+apply_theme() {
+    local theme_dir="$1"
+    local theme_file="$theme_dir/theme.toml"
+
+    if [[ ! -f "$theme_file" ]]; then
+        error "Theme file not found: $theme_file"
+    fi
+
+    log "Applying theme from: $theme_dir"
+
+    # Parse theme into environment variables
+    parse_theme_toml "$theme_file"
+
+    # Export common aliases for templates
+    export THEME_NAME="${THEME_NAME:-unknown}"
+    export WALLPAPER="${THEME_WALLPAPER:-}"
+
+    # Terminal color aliases for kitty template
+    export FOREGROUND="${FOREGROUND:-$ON_SURFACE}"
+    export TERMINAL_BACKGROUND="${BACKGROUND:-$SURFACE}"
+    export CURSOR="${CURSOR:-$ON_SURFACE}"
+    export CURSOR_TEXT="${CURSOR_TEXT:-$ON_SURFACE_VARIANT}"
+    export SELECTION_FG="${SELECTION_FG:-$ON_SECONDARY}"
+    export SELECTION_BG="${SELECTION_BG:-$SECONDARY}"
+    export URL_COLOR="${URL_COLOR:-$PRIMARY}"
+
+    # Waybar icon colors (use theme values or fallback to Material Design tokens)
+    export WAYBAR_POWER="${WAYBAR_POWER:-$TERTIARY}"
+    export WAYBAR_NETWORK="${WAYBAR_NETWORK:-$SECONDARY}"
+    export WAYBAR_APPS="${WAYBAR_APPS:-$PRIMARY}"
+    export WAYBAR_IDLE="${WAYBAR_IDLE:-$ON_SURFACE}"
+    export WAYBAR_NOTIFICATION="${WAYBAR_NOTIFICATION:-$TERTIARY}"
+
+    # Add extra variables to the substitution list
+    EXPORTED_VARS="$EXPORTED_VARS \${THEME_NAME} \${WALLPAPER}"
+    EXPORTED_VARS="$EXPORTED_VARS \${FOREGROUND} \${TERMINAL_BACKGROUND} \${CURSOR} \${CURSOR_TEXT}"
+    EXPORTED_VARS="$EXPORTED_VARS \${SELECTION_FG} \${SELECTION_BG} \${URL_COLOR}"
+    EXPORTED_VARS="$EXPORTED_VARS \${WAYBAR_POWER} \${WAYBAR_NETWORK} \${WAYBAR_APPS} \${WAYBAR_IDLE} \${WAYBAR_NOTIFICATION}"
+
+    # Generate all config files from templates
+    process_template "$TEMPLATES_DIR/hyprland-colors.conf.tmpl" "$HYPR_COLORS"
+    process_template "$TEMPLATES_DIR/waybar-colors.css.tmpl" "$WAYBAR_COLORS"
+    process_template "$TEMPLATES_DIR/waybar-colors.css.tmpl" "$WLOGOUT_COLORS"
+    process_template "$TEMPLATES_DIR/waybar-colors.css.tmpl" "$SWAYNC_COLORS"
+    process_template "$TEMPLATES_DIR/kitty-colors.conf.tmpl" "$KITTY_COLORS"
+    process_template "$TEMPLATES_DIR/rofi-colors.rasi.tmpl" "$ROFI_COLORS"
+    process_template "$TEMPLATES_DIR/dunst-colors.conf.tmpl" "$DUNST_COLORS"
+    process_template "$TEMPLATES_DIR/gtk-colors.css.tmpl" "$GTK3_CSS"
+    process_template "$TEMPLATES_DIR/gtk-colors.css.tmpl" "$GTK4_CSS"
+
+    # Save current theme name
+    echo "$THEME_NAME" > "$CURRENT_FILE"
+
+    # Set GTK theme
+    set_gtk_theme
+
+    # Set wallpaper
+    set_wallpaper "$WALLPAPER" "$theme_dir"
+
+    # Reload applications
+    reload_apps
+
+    log "Theme '${THEME_NAME}' applied successfully!"
+}
+
+# Generate theme from pywal
+generate_pywal_theme() {
+    local image="${1:-}"
+
+    if ! command -v wal &>/dev/null; then
+        error "pywal (wal) is not installed"
+    fi
+
+    # If no image, try to get current wallpaper
+    if [[ -z "$image" ]]; then
+        if command -v swww &>/dev/null; then
+            image=$(swww query 2>/dev/null | grep -oP 'image: \K.*' | head -1) || true
+        fi
+    fi
+
+    if [[ -z "$image" ]] || [[ ! -f "$image" ]]; then
+        error "No valid image specified and couldn't detect current wallpaper"
+    fi
+
+    log "Generating pywal theme from: $image"
+
+    # Run pywal to generate colors
+    wal -i "$image" -n -q -e
+
+    # Convert pywal output to our theme.toml format
+    mkdir -p "$DYNAMIC_DIR/pywal"
+    local theme_file="$DYNAMIC_DIR/pywal/theme.toml"
+
+    # Source pywal colors (disable nounset temporarily as colors.sh may reference unset vars)
+    # shellcheck source=/dev/null
+    set +u
+    source "$HOME/.cache/wal/colors.sh"
+    set -u
+
+    # Generate theme.toml from pywal colors
+    cat > "$theme_file" << EOF
+[meta]
+name = "pywal-generated"
+description = "Generated from $(basename "$image") using pywal"
+source = "pywal"
+mode = "dark"
+wallpaper = "$image"
+gtk_theme = "Adwaita-dark"
+icon_theme = "breeze-dark"
+cursor_theme = "default"
+
+[colors]
+# Pywal colors mapped to Material Design 3 tokens
+background = "$background"
+surface = "$background"
+surface_container = "$color0"
+surface_container_low = "$background"
+surface_container_high = "$color8"
+surface_container_highest = "$color7"
+surface_container_lowest = "$background"
+surface_bright = "$color7"
+surface_dim = "$background"
+surface_tint = "$color4"
+surface_variant = "$color8"
+primary = "$color4"
+primary_container = "$color4"
+primary_fixed = "$color4"
+primary_fixed_dim = "$color12"
+secondary = "$color5"
+secondary_container = "$color5"
+secondary_fixed = "$color5"
+secondary_fixed_dim = "$color13"
+tertiary = "$color6"
+tertiary_container = "$color6"
+tertiary_fixed = "$color6"
+tertiary_fixed_dim = "$color14"
+on_surface = "$foreground"
+on_background = "$foreground"
+on_primary = "$background"
+on_primary_container = "$foreground"
+on_primary_fixed = "$background"
+on_primary_fixed_variant = "$color0"
+on_secondary = "$background"
+on_secondary_container = "$foreground"
+on_secondary_fixed = "$background"
+on_secondary_fixed_variant = "$color0"
+on_tertiary = "$background"
+on_tertiary_container = "$foreground"
+on_tertiary_fixed = "$background"
+on_tertiary_fixed_variant = "$color0"
+on_surface_variant = "$color15"
+outline = "$color8"
+outline_variant = "$color0"
+error = "$color1"
+error_container = "$color9"
+on_error = "$foreground"
+on_error_container = "$foreground"
+inverse_surface = "$foreground"
+inverse_on_surface = "$background"
+inverse_primary = "$color12"
+scrim = "#000000"
+shadow = "#000000"
+source_color = "$color4"
+
+[colors.terminal]
+foreground = "$foreground"
+background = "$background"
+cursor = "$cursor"
+cursor_text = "$background"
+selection_fg = "$background"
+selection_bg = "$color5"
+url_color = "$color4"
+color0 = "$color0"
+color1 = "$color1"
+color2 = "$color2"
+color3 = "$color3"
+color4 = "$color4"
+color5 = "$color5"
+color6 = "$color6"
+color7 = "$color7"
+color8 = "$color8"
+color9 = "$color9"
+color10 = "$color10"
+color11 = "$color11"
+color12 = "$color12"
+color13 = "$color13"
+color14 = "$color14"
+color15 = "$color15"
+EOF
+
+    # Apply the generated theme
+    apply_theme "$DYNAMIC_DIR/pywal"
+}
+
+# Generate theme from matugen
+generate_matugen_theme() {
+    local image="${1:-}"
+
+    if ! command -v matugen &>/dev/null; then
+        error "matugen is not installed"
+    fi
+
+    # If no image, try to get current wallpaper
+    if [[ -z "$image" ]]; then
+        if command -v swww &>/dev/null; then
+            image=$(swww query 2>/dev/null | grep -oP 'image: \K.*' | head -1) || true
+        fi
+    fi
+
+    if [[ -z "$image" ]] || [[ ! -f "$image" ]]; then
+        error "No valid image specified and couldn't detect current wallpaper"
+    fi
+
+    log "Generating matugen theme from: $image"
+
+    # Run matugen - it will use the config at ~/.config/matugen/config.toml
+    # which is symlinked to our dotfiles/matugen/config.toml
+    matugen image "$image" 2>/dev/null
+
+    # Create a theme.toml for tracking
+    mkdir -p "$DYNAMIC_DIR/matugen"
+    cat > "$DYNAMIC_DIR/matugen/theme.toml" << EOF
+[meta]
+name = "matugen-generated"
+description = "Material You theme from $(basename "$image")"
+source = "matugen"
+mode = "dark"
+wallpaper = "$image"
+gtk_theme = "Adwaita-dark"
+icon_theme = "breeze-dark"
+cursor_theme = "default"
+EOF
+
+    # Save current theme
+    echo "matugen-generated" > "$CURRENT_FILE"
+
+    # Note: matugen already reloads apps via its post_hooks in config.toml
+    # No need to call reload_apps() here
+
+    log "Theme 'matugen-generated' applied successfully!"
+}
+
+# Save dynamic theme as static
+save_current_theme() {
+    local new_name="$1"
+
+    if [[ -z "$new_name" ]]; then
+        error "Please provide a name for the theme"
+    fi
+
+    local new_dir="$THEMES_DIR/$new_name"
+
+    if [[ -d "$new_dir" ]]; then
+        error "Theme '$new_name' already exists"
+    fi
+
+    # Check for dynamic theme
+    local source_dir=""
+    if [[ -d "$DYNAMIC_DIR/pywal" ]] && [[ -f "$DYNAMIC_DIR/pywal/theme.toml" ]]; then
+        source_dir="$DYNAMIC_DIR/pywal"
+    elif [[ -d "$DYNAMIC_DIR/matugen" ]] && [[ -f "$DYNAMIC_DIR/matugen/theme.toml" ]]; then
+        source_dir="$DYNAMIC_DIR/matugen"
+    fi
+
+    if [[ -z "$source_dir" ]]; then
+        error "No dynamic theme found to save"
+    fi
+
+    cp -r "$source_dir" "$new_dir"
+
+    # Update the theme name in the file
+    sed -i "s/^name = .*/name = \"$new_name\"/" "$new_dir/theme.toml"
+    sed -i "s/^source = .*/source = \"static\"/" "$new_dir/theme.toml"
+
+    log "Saved dynamic theme as: $new_name"
+}
+
+# List available themes
+list_themes() {
+    local current=""
+    if [[ -f "$CURRENT_FILE" ]]; then
+        current=$(cat "$CURRENT_FILE")
+    fi
+
+    echo -e "${BLUE}Available themes:${NC}"
+    echo "─────────────────"
+
+    for theme_dir in "$THEMES_DIR"/*/; do
+        [[ "$theme_dir" == *"_dynamic"* ]] && continue
+        [[ ! -f "$theme_dir/theme.toml" ]] && continue
+
+        local name
+        name=$(basename "$theme_dir")
+        local desc=""
+        desc=$(grep -oP '^description = "\K[^"]+' "$theme_dir/theme.toml" 2>/dev/null || echo "")
+
+        if [[ "$name" == "$current" ]]; then
+            echo -e "${GREEN}* $name${NC} - $desc"
+        else
+            echo "  $name - $desc"
+        fi
+    done
+
+    echo ""
+    echo -e "${BLUE}Dynamic generators:${NC}"
+    echo "  --pywal [image]   Generate from wallpaper using pywal"
+    echo "  --matugen [image] Generate Material You colors using matugen"
+}
+
+# Show current theme
+show_current() {
+    if [[ -f "$CURRENT_FILE" ]]; then
+        local current
+        current=$(cat "$CURRENT_FILE")
+        echo "Current theme: $current"
+    else
+        echo "No theme currently set"
+    fi
+}
+
+# Show help
+show_help() {
+    cat << EOF
+Usage: theme-switch <theme-name|option>
+
+Options:
+  <theme-name>        Apply named theme
+  --pywal [image]     Generate from wallpaper using pywal
+  --matugen [image]   Generate Material You colors using matugen
+  --list, -l          List available themes
+  --current, -c       Show current theme
+  --save <name>       Save current dynamic theme as static
+  --help, -h          Show this help
+
+Examples:
+  theme-switch hacker-yoda
+  theme-switch catppuccin-mocha
+  theme-switch --pywal ~/Pictures/wallpaper.jpg
+  theme-switch --matugen ~/Pictures/wallpaper.jpg
+  theme-switch --save my-custom-theme
+EOF
+}
+
+# Main
+main() {
+    case "${1:-}" in
+        --list|-l)
+            list_themes
+            ;;
+        --current|-c)
+            show_current
+            ;;
+        --pywal|-p)
+            generate_pywal_theme "${2:-}"
+            ;;
+        --matugen|-m)
+            generate_matugen_theme "${2:-}"
+            ;;
+        --save|-s)
+            save_current_theme "${2:-}"
+            ;;
+        --help|-h)
+            show_help
+            ;;
+        "")
+            list_themes
+            ;;
+        -*)
+            error "Unknown option: $1"
+            ;;
+        *)
+            local theme_dir="$THEMES_DIR/$1"
+            if [[ -d "$theme_dir" ]]; then
+                apply_theme "$theme_dir"
+            else
+                error "Theme not found: $1\nRun 'theme-switch --list' to see available themes"
+            fi
+            ;;
+    esac
+}
+
+main "$@"

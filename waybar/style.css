@@ -59,7 +59,7 @@ tooltip label {
 }
 
 #custom-power {
-  color: green;
+  color: @waybar_power;
   padding-right: 5px;
   padding-left: 5px;
 }
@@ -107,7 +107,7 @@ tooltip label {
 #network {
   padding-right: 10px;
   padding-left: 10px;
-  color: cyan;
+  color: @waybar_network;
 }
 
 #custom-apps {
@@ -116,7 +116,7 @@ tooltip label {
   margin: 3px 10px 3px 0px;
   opacity: 0.8;
   font-size: 20px;
-  color: #0B57A4;
+  color: @waybar_apps;
 }
 
 #tray {
@@ -126,11 +126,56 @@ tooltip label {
 #idle_inhibitor {
   padding-right: 15px;
   font-size: 1.1em;
-  color: white;
+  color: @waybar_idle;
 }
 
 #custom-notification {
   padding-right: 10px;
   padding-left: 10px;
-  color: yellow;
+  color: @waybar_notification;
+}
+
+#custom-weather {
+  padding-right: 10px;
+  padding-left: 10px;
+  color: @secondary;
+}
+
+#custom-weather.warning {
+  color: @tertiary;
+}
+
+#custom-weather.danger {
+  color: @error;
+}
+
+#custom-weather.error {
+  color: @outline;
+}
+
+#custom-claude {
+  padding-right: 10px;
+  padding-left: 10px;
+  color: @tertiary;
+}
+
+#custom-claude.critical {
+  color: @error;
+}
+
+#custom-claude.warning {
+  color: @tertiary;
+}
+
+#custom-claude.medium {
+  color: @secondary;
+}
+
+#custom-claude.normal {
+  color: @on_surface;
+}
+
+#custom-claude.disconnected,
+#custom-claude.error {
+  color: @outline;
 }

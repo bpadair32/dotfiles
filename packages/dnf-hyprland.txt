@@ -1,0 +1,18 @@
+# Hyprland ecosystem
+hyprland
+hyprlock
+hypridle
+hyprshot
+hyprpolkitagent
+waybar
+rofi-wayland
+swaync
+dunst
+swww
+wl-clipboard
+cliphist
+brightnessctl
+playerctl
+wlogout
+python3-pyprland
+qt6ct

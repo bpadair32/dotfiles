@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+#
+# claude-usage - Display Claude Code usage limits for Waybar
+#
+# Fetches session (5hr) and weekly (7 day) usage from Anthropic API
+# Output format: JSON for Waybar custom module
+#
+
+set -euo pipefail
+
+CREDS_FILE="$HOME/.claude/.credentials.json"
+
+# Check if credentials exist
+if [[ ! -f "$CREDS_FILE" ]]; then
+    echo '{"text": "󰚩 --", "tooltip": "Claude: Not logged in", "class": "disconnected"}'
+    exit 0
+fi
+
+# Check for jq
+if ! command -v jq &>/dev/null; then
+    echo '{"text": "󰚩 ?", "tooltip": "Error: jq not installed", "class": "error"}'
+    exit 0
+fi
+
+# Get access token
+ACCESS_TOKEN=$(jq -r '.claudeAiOauth.accessToken // empty' "$CREDS_FILE" 2>/dev/null)
+
+if [[ -z "$ACCESS_TOKEN" ]]; then
+    echo '{"text": "󰚩 --", "tooltip": "Claude: No access token", "class": "disconnected"}'
+    exit 0
+fi
+
+# Fetch usage data
+USAGE=$(curl -sf "https://api.anthropic.com/api/oauth/usage" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -H "User-Agent: claude-code/2.0.32" \
+    -H "anthropic-beta: oauth-2025-04-20" \
+    -H "Content-Type: application/json" 2>/dev/null)
+
+if [[ -z "$USAGE" ]] || [[ "$USAGE" == "null" ]]; then
+    echo '{"text": "󰚩 --", "tooltip": "Claude: API error", "class": "error"}'
+    exit 0
+fi
+
+# Parse usage data
+session_pct=$(echo "$USAGE" | jq -r '.five_hour.utilization // 0' | cut -d. -f1)
+session_reset=$(echo "$USAGE" | jq -r '.five_hour.resets_at // empty')
+weekly_pct=$(echo "$USAGE" | jq -r '.seven_day.utilization // 0' | cut -d. -f1)
+weekly_reset=$(echo "$USAGE" | jq -r '.seven_day.resets_at // empty')
+
+# Format reset times
+format_reset() {
+    local iso_time="$1"
+    if [[ -n "$iso_time" ]] && [[ "$iso_time" != "null" ]]; then
+        # Convert to local time and get relative time
+        local reset_epoch=$(date -d "$iso_time" +%s 2>/dev/null || echo "0")
+        local now_epoch=$(date +%s)
+        local diff=$((reset_epoch - now_epoch))
+
+        if [[ $diff -le 0 ]]; then
+            echo "now"
+        elif [[ $diff -lt 3600 ]]; then
+            echo "$((diff / 60))m"
+        elif [[ $diff -lt 86400 ]]; then
+            echo "$((diff / 3600))h"
+        else
+            echo "$((diff / 86400))d"
+        fi
+    else
+        echo "?"
+    fi
+}
+
+session_reset_fmt=$(format_reset "$session_reset")
+weekly_reset_fmt=$(format_reset "$weekly_reset")
+
+# Build display text - show session percentage
+text="󰚩 ${session_pct}%"
+
+# Build tooltip
+tooltip="Claude Usage Limits\n"
+tooltip+="────────────────────\n"
+tooltip+="Session (5hr):  ${session_pct}%\n"
+tooltip+="  Resets in: ${session_reset_fmt}\n"
+tooltip+="\n"
+tooltip+="Weekly (7 day): ${weekly_pct}%\n"
+tooltip+="  Resets in: ${weekly_reset_fmt}"
+
+# Escape for JSON
+tooltip_escaped=$(echo -e "$tooltip" | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|/\\n/g')
+
+# Determine class based on session usage
+if [[ $session_pct -ge 90 ]]; then
+    class="critical"
+elif [[ $session_pct -ge 75 ]]; then
+    class="warning"
+elif [[ $session_pct -ge 50 ]]; then
+    class="medium"
+else
+    class="normal"
+fi
+
+# Output JSON for Waybar
+echo "{\"text\": \"${text}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${class}\"}"

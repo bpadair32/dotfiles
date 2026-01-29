@@ -1,0 +1,103 @@
+#!/bin/bash
+# Display Hyprland keybinds in a rofi popup
+
+KEYBINDS_FILE="$HOME/.config/hypr/configs/keybinds.conf"
+
+# Parse keybinds and format for display
+parse_keybinds() {
+    local section=""
+
+    while IFS= read -r line; do
+        # Skip empty lines
+        [[ -z "$line" ]] && continue
+
+        # Capture section comments
+        if [[ "$line" =~ ^#[[:space:]]*(.+) ]]; then
+            section="${BASH_REMATCH[1]}"
+            # Skip decorative lines
+            [[ "$section" =~ ^[#]+$ ]] && continue
+            echo ""
+            echo "━━━ $section ━━━"
+            continue
+        fi
+
+        # Parse bind lines
+        if [[ "$line" =~ ^bind[emlr]*[[:space:]]*=[[:space:]]*(.+) ]]; then
+            local bind_def="${BASH_REMATCH[1]}"
+
+            # Extract modifier, key, and action
+            IFS=',' read -ra parts <<< "$bind_def"
+            local mod=$(echo "${parts[0]}" | sed 's/\$mainMod/Super/g' | xargs)
+            local key=$(echo "${parts[1]}" | xargs)
+            local action=$(echo "${parts[2]}" | xargs)
+            local arg=$(echo "${parts[3]}" | xargs 2>/dev/null)
+
+            # Format the keybind
+            local keybind="$mod + $key"
+            keybind=$(echo "$keybind" | sed 's/^[[:space:]]*+[[:space:]]*//')
+
+            # Generate description based on action
+            local desc=""
+            case "$action" in
+                exec)
+                    # Extract meaningful name from command
+                    local cmd="$arg"
+                    cmd=$(basename "$cmd" | cut -d' ' -f1)
+                    case "$cmd" in
+                        \$terminal) desc="Open terminal" ;;
+                        \$fileManager) desc="Open file manager" ;;
+                        \$menu) desc="Open app launcher" ;;
+                        hyprlock) desc="Lock screen" ;;
+                        hyprshot*) desc="Screenshot" ;;
+                        cliphist*) desc="Clipboard history" ;;
+                        rofi*) desc="Rofi menu" ;;
+                        flatpak*|zen*) desc="Open Zen Browser" ;;
+                        google-chrome) desc="Open Chrome" ;;
+                        kitty*) desc="Open Kitty with tmux" ;;
+                        pypr*) desc="Toggle dropdown terminal" ;;
+                        wpctl*) desc="Volume control" ;;
+                        brightnessctl*) desc="Brightness control" ;;
+                        playerctl*) desc="Media control" ;;
+                        *wifi*) desc="WiFi menu" ;;
+                        *bluetooth*) desc="Bluetooth menu" ;;
+                        *notes*) desc="Notes" ;;
+                        *walSwitch*) desc="Wallpaper switcher" ;;
+                        *theme*) desc="Theme selector" ;;
+                        *) desc="Run: $cmd" ;;
+                    esac
+                    ;;
+                killactive) desc="Close window" ;;
+                exit) desc="Exit Hyprland" ;;
+                togglefloating) desc="Toggle floating" ;;
+                togglesplit|toggleSplit) desc="Toggle split" ;;
+                movefocus) desc="Focus $arg" ;;
+                workspace) desc="Workspace $arg" ;;
+                movetoworkspace) desc="Move to workspace $arg" ;;
+                togglespecialworkspace) desc="Toggle scratchpad" ;;
+                movewindow) desc="Move window (drag)" ;;
+                resizewindow) desc="Resize window (drag)" ;;
+                pseudo) desc="Toggle pseudo-tiling" ;;
+                submap)
+                    if [[ "$arg" == "resize" ]]; then
+                        desc="Enter resize mode"
+                    else
+                        desc="Exit submap"
+                    fi
+                    ;;
+                resizeactive) desc="Resize window" ;;
+                *) desc="$action${arg:+ $arg}" ;;
+            esac
+
+            # Skip mouse bindings for cleaner output
+            [[ "$key" =~ ^mouse ]] && continue
+
+            printf "%-25s  %s\n" "$keybind" "$desc"
+        fi
+    done < "$KEYBINDS_FILE"
+}
+
+# Generate and display
+keybinds=$(parse_keybinds)
+
+echo "$keybinds" | rofi -dmenu -i -p "Keybinds" \
+    -theme-str 'window { width: 700px; } listview { lines: 25; } element { padding: 4px; } element-text { font: "monospace 11"; }'

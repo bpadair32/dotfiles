@@ -9,6 +9,7 @@ alias vim="nvim"
 alias cat="bat"
 alias cd="z"
 alias man="batman"
+
 #Quick directory navigation
 alias ..="cd .."
 alias ...="cd ../.."
@@ -20,6 +21,7 @@ alias temp="cd ~/Documents/temp"
 alias adair="cd ~/Documents/Adair_Technology"
 alias fbi="cd ~/Documents/FishBowl"
 alias clients="cd ~/Documents/Adair_Technology/clients"
+
 #Count files in directory
 alias countFiles="echo $(ls -1 | wc -l)"
 
@@ -30,7 +32,6 @@ alias my-ip="curl ipinfo.io/ip"
 alias mkdir="mkdir -pv"
 
 #system maintenance
-## if mac
 alias cleanTemp="rm -rf ~/Documents/temp/*"
 
 #Utilities
