@@ -87,11 +87,7 @@ main() {
     # Build output
     local output
     local icon="󰏗"  # nf-md-package_up
-    if [[ $total -eq 0 ]]; then
-        output="{\"text\": \"\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${class}\"}"
-    else
-        output="{\"text\": \"${icon} ${total}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${class}\"}"
-    fi
+    output="{\"text\": \"${icon} ${total}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${class}\"}"
 
     # Cache result
     echo "$output" > "$CACHE_FILE"
