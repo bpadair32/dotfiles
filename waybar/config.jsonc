@@ -29,7 +29,10 @@
       "class<kitty>": " ",
       "class<Alacritty>": " ",
       "class<foot>": " ",
-      "class<.*[Zz]en.*>": " ",
+      "class<.*zen.*>": " ",
+      "class<zen>": " ",
+      "class<zen-browser>": " ",
+      "class<app.zen_browser.zen>": " ",
       "class<firefox>": " ",
       "class<chromium>": " ",
       "class<google-chrome>": " ",
@@ -38,6 +41,7 @@
       "class<Code>": " ",
       "class<neovide>": " ",
       "class<obsidian>": " ",
+      "class<slack>": " ",
       "class<Slack>": " ",
       "class<discord>": " ",
       "class<WebCord>": " ",
@@ -48,7 +52,7 @@
       "class<thunar>": " ",
       "class<vlc>": " ",
       "class<mpv>": " ",
-      "class<[Gg]imp.*>": " ",
+      "class<.*gimp.*>": " ",
       "class<blender>": " ",
       "class<libreoffice.*>": " ",
       "class<thunderbird>": " ",
@@ -77,8 +81,11 @@
   "hyprland/window": {
     "format": "{}",
     "max-length": 40,
+    "placeholder": "",
     "rewrite": {
-      "(.*) — Zen Browser": "🌎 $1"
+      "(.*) — Zen Browser": "🌎 $1",
+      "\\*?WebCord - (.*)": "  $1",
+      "(.*) - Obsidian.*": " $1"
     },
     "separate-outputs": true
   },
@@ -194,7 +201,7 @@
       "Paused": " "
     },
     "max-length": 50,
-    "exec": "playerctl -a metadata --format '{\"text\": \"{{playerName}}: {{artist}} - {{markup_escape(title)}}\", \"tooltip\": \"{{playerName}} : {{markup_escape(title)}}\", \"alt\": \"{{status}}\", \"class\": \"{{status}}\"}' -F",
+    "exec": "~/repos/dotfiles/scripts/media-status",
     "on-click": "playerctl play-pause"
   },
   "custom/weather": {
