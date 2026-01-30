@@ -9,9 +9,12 @@
 set -euo pipefail
 
 # Configuration - customize these
-LOCATION="40.1842,-82.8838"  # Galena, OH coordinates
-LOCATION_NAME="Galena, OH"   # Display name override
-UNITS="F"                     # F or C
+# Override with environment variables when traveling:
+#   export WEATHER_LOCATION="41.8781,-87.6298"
+#   export WEATHER_LOCATION_NAME="Chicago, IL"
+LOCATION="${WEATHER_LOCATION:-40.1842,-82.8838}"  # Default: Galena, OH
+LOCATION_NAME="${WEATHER_LOCATION_NAME:-Galena, OH}"
+UNITS="${WEATHER_UNITS:-F}"  # F or C
 
 # Cache settings (avoid hitting API too frequently)
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/waybar-weather"
@@ -42,7 +45,7 @@ get_weather_icon() {
         116) echo "⛅" ;;   # Partly cloudy
         119) echo "☁️" ;;   # Cloudy
         122) echo "☁️" ;;   # Overcast
-        143|248|260) echo "🌫️" ;;  # Fog/Mist
+        143|248|260) echo "☁️" ;;  # Fog/Mist (use cloud icon)
         176|263|266|293|296|353) echo "🌦️" ;;  # Light rain/drizzle
         179|182|185|281|284|311|314|317) echo "🌨️" ;;  # Sleet/freezing
         200) echo "⛈️" ;;   # Thunderstorm
@@ -96,11 +99,10 @@ fetch_alerts() {
         return
     fi
 
-    # Get coordinates from weather data
-    local weather="$1"
+    # Use exact coordinates from LOCATION config (not nearest_area from API)
     local lat lon
-    lat=$(echo "$weather" | jq -r '.nearest_area[0].latitude')
-    lon=$(echo "$weather" | jq -r '.nearest_area[0].longitude')
+    lat="${LOCATION%,*}"
+    lon="${LOCATION#*,}"
 
     if [[ -z "$lat" ]] || [[ -z "$lon" ]]; then
         echo '{"features":[]}' > "$ALERTS_CACHE"
@@ -158,7 +160,7 @@ main() {
 
     # Fetch alerts
     local alerts alert_count alert_text alert_icon alert_class
-    alerts=$(fetch_alerts "$weather")
+    alerts=$(fetch_alerts)
     alert_count=$(echo "$alerts" | jq -r '.features | length')
     alert_text=""
     alert_icon=""
@@ -182,10 +184,10 @@ main() {
         fi
     fi
 
-    # Build display text
+    # Build display text (icons together, then temperature)
     local text
     if [[ -n "$alert_icon" ]]; then
-        text="${weather_icon} ${temp}°${UNITS} ${alert_icon}"
+        text="${weather_icon} ${alert_icon} ${temp}°${UNITS}"
     else
         text="${weather_icon} ${temp}°${UNITS}"
     fi

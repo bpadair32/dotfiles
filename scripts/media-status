@@ -1,0 +1,10 @@
+#!/bin/bash
+# Waybar media module - only shows when media is actively playing
+
+playerctl -a metadata --format '{{status}}	{{playerName}}: {{artist}} - {{markup_escape(title)}}	{{playerName}} : {{markup_escape(title)}}' -F 2>/dev/null | while IFS=$'\t' read -r status text tooltip; do
+    if [[ "$status" == "Playing" ]]; then
+        echo "{\"text\": \"$text\", \"tooltip\": \"$tooltip\", \"alt\": \"$status\", \"class\": \"$status\"}"
+    else
+        echo ""
+    fi
+done
