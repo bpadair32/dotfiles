@@ -1,3 +1,353 @@
 @import 'colors.css';
-@import 'themes/nova-dark/notifications.css';
-@import 'themes/nova-dark/central_control.css';';
+
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+
+* {
+  all: unset;
+  font-family: "JetBrains Mono Nerd Font", "Noto Sans", monospace;
+  font-size: 13px;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.blank-window {
+  background: transparent;
+}
+
+/* ─── Control Center ──────────────────────────────────────────────────────── */
+
+.control-center {
+  background: alpha(@surface_container, 0.92);
+  border-radius: 18px;
+  border: 1px solid alpha(@outline_variant, 0.5);
+  box-shadow: 0 8px 32px alpha(@shadow, 0.45);
+  margin: 8px;
+  padding: 10px;
+}
+
+/* ─── Title Widget ────────────────────────────────────────────────────────── */
+
+.widget-title {
+  margin: 2px 2px 6px 2px;
+  padding: 2px 6px;
+}
+
+.widget-title > label {
+  color: @on_surface;
+  font-size: 1em;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.widget-title > button {
+  background: alpha(@primary_container, 0.5);
+  border-radius: 8px;
+  color: @on_primary_container;
+  padding: 4px 12px;
+  font-size: 0.82em;
+  font-weight: 600;
+}
+
+.widget-title > button:hover {
+  background: @primary_container;
+}
+
+.widget-title > button:active {
+  background: @primary;
+  color: @on_primary;
+}
+
+/* ─── Do Not Disturb Widget ───────────────────────────────────────────────── */
+
+.widget-dnd {
+  margin: 2px 4px 6px 4px;
+  color: @on_surface;
+  font-size: 0.9em;
+}
+
+.widget-dnd > switch {
+  background: @surface_container_high;
+  border-radius: 14px;
+  border: 1px solid alpha(@outline_variant, 0.6);
+  padding: 3px;
+  box-shadow: none;
+}
+
+.widget-dnd > switch:hover {
+  background: @surface_bright;
+  border-color: @outline;
+}
+
+.widget-dnd > switch:checked {
+  background: alpha(@primary_container, 0.8);
+  border-color: @primary;
+}
+
+.widget-dnd > switch slider {
+  background: @on_surface_variant;
+  border-radius: 12px;
+  min-width: 22px;
+  min-height: 22px;
+}
+
+.widget-dnd > switch:checked slider {
+  background: @primary;
+}
+
+/* ─── Notifications in Control Center ────────────────────────────────────── */
+
+.control-center .notification-row {
+  outline: none;
+  margin: 2px 0;
+}
+
+.control-center .notification-row .notification-background {
+  background: alpha(@surface_container_high, 0.65);
+  border-radius: 12px;
+  border: 1px solid alpha(@outline_variant, 0.25);
+  margin: 2px 0;
+  padding: 2px;
+}
+
+.control-center .notification-row .notification-background:hover {
+  background: alpha(@surface_container_highest, 0.8);
+  border-color: alpha(@outline, 0.4);
+}
+
+.control-center .notification-row .notification-background .notification.critical {
+  border: 1px solid alpha(@error, 0.55);
+  background: alpha(@error_container, 0.18);
+  border-radius: 10px;
+}
+
+.control-center .notification-row .notification-background .notification .notification-content {
+  margin: 8px 10px;
+}
+
+.control-center .notification-row .notification-background .notification > *:last-child > * {
+  min-height: 3em;
+}
+
+.control-center .notification-row .notification-background .notification > *:last-child > * .notification-action {
+  background: alpha(@secondary_container, 0.45);
+  color: @on_secondary_container;
+  border-radius: 8px;
+  margin: 4px;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.control-center .notification-row .notification-background .notification > *:last-child > * .notification-action:hover {
+  background: @secondary_container;
+}
+
+.control-center .notification-row .notification-background .notification > *:last-child > * .notification-action:active {
+  background: @secondary;
+  color: @on_secondary;
+}
+
+/* ─── Close Button ────────────────────────────────────────────────────────── */
+
+.control-center .notification-row .notification-background .close-button {
+  background: transparent;
+  border-radius: 6px;
+  color: @on_surface_variant;
+  margin: 4px;
+  padding: 4px 6px;
+}
+
+.control-center .notification-row .notification-background .close-button:hover {
+  background: alpha(@error, 0.15);
+  color: @error;
+}
+
+.control-center .notification-row .notification-background .close-button:active {
+  background: alpha(@error, 0.3);
+  color: @error;
+}
+
+/* ─── Notification Text ───────────────────────────────────────────────────── */
+
+.summary {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: @on_surface;
+}
+
+.body {
+  font-size: 0.8rem;
+  color: @on_surface_variant;
+  margin-top: 2px;
+}
+
+.image {
+  margin: 8px 12px 8px 8px;
+  border-radius: 8px;
+}
+
+/* ─── Progress Bars ───────────────────────────────────────────────────────── */
+
+progressbar,
+progress,
+trough {
+  border-radius: 8px;
+}
+
+progressbar {
+  background: alpha(@surface_container_highest, 0.5);
+}
+
+.notification.critical progress {
+  background: @error;
+}
+
+.notification.normal progress,
+.notification.low progress {
+  background: @primary;
+}
+
+/* ─── Notification Groups ─────────────────────────────────────────────────── */
+
+.notification-group {
+  margin: 4px 2px;
+}
+
+.notification-group-headers {
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: @on_surface_variant;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.notification-group-icon {
+  color: @primary;
+}
+
+.notification-group-collapse-button,
+.notification-group-close-all-button {
+  background: transparent;
+  color: @on_surface_variant;
+  margin: 2px;
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.notification-group-collapse-button:hover,
+.notification-group-close-all-button:hover {
+  background: alpha(@primary_container, 0.4);
+  color: @on_primary_container;
+}
+
+/* ─── MPRIS Widget ────────────────────────────────────────────────────────── */
+
+.widget-mpris {
+  background: alpha(@surface_container_high, 0.65);
+  border-radius: 14px;
+  border: 1px solid alpha(@outline_variant, 0.3);
+  margin: 4px 2px;
+}
+
+.widget-mpris-player {
+  background: transparent;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.widget-mpris-album-art {
+  border-radius: 10px;
+}
+
+.widget-mpris-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: @on_surface;
+}
+
+.widget-mpris-subtitle {
+  font-size: 0.78rem;
+  color: @on_surface_variant;
+  margin-top: 2px;
+}
+
+.widget-mpris button {
+  color: alpha(@on_surface, 0.55);
+  border-radius: 50%;
+  padding: 6px;
+  background: transparent;
+}
+
+.widget-mpris button:hover {
+  background: alpha(@primary_container, 0.45);
+  color: @on_surface;
+}
+
+.widget-mpris > box > button {
+  color: @on_surface;
+  border-radius: 50%;
+}
+
+/* ─── Floating Notifications ──────────────────────────────────────────────── */
+
+.floating-notifications.background .notification-row .notification-background {
+  background: alpha(@surface_container, 0.90);
+  box-shadow: 0 4px 20px alpha(@shadow, 0.5);
+  border-radius: 14px;
+  border: 1px solid alpha(@outline_variant, 0.4);
+  margin: 10px;
+  padding: 2px;
+}
+
+.floating-notifications.background .notification-row .notification-background .notification {
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.floating-notifications.background .notification-row .notification-background .notification.critical {
+  border: 1px solid @error;
+}
+
+.floating-notifications.background .notification-row .notification-background .notification .notification-content {
+  margin: 12px 14px;
+}
+
+.floating-notifications.background .notification-row .notification-background .notification > *:last-child > * {
+  min-height: 3em;
+}
+
+.floating-notifications.background .notification-row .notification-background .notification > *:last-child > * .notification-action {
+  border-radius: 8px;
+  background: alpha(@secondary_container, 0.55);
+  color: @on_secondary_container;
+  margin: 4px;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.floating-notifications.background .notification-row .notification-background .notification > *:last-child > * .notification-action:hover {
+  background: @secondary_container;
+}
+
+.floating-notifications.background .notification-row .notification-background .notification > *:last-child > * .notification-action:active {
+  background: @secondary;
+  color: @on_secondary;
+}
+
+.floating-notifications.background .notification-row .notification-background .close-button {
+  margin: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: transparent;
+  color: @on_surface_variant;
+}
+
+.floating-notifications.background .notification-row .notification-background .close-button:hover {
+  background: alpha(@error, 0.15);
+  color: @error;
+}
+
+.floating-notifications.background .notification-row .notification-background .close-button:active {
+  background: alpha(@error, 0.3);
+  color: @error;
+}

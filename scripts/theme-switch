@@ -247,7 +247,7 @@ apply_theme() {
     process_template "$TEMPLATES_DIR/hyprland-colors.conf.tmpl" "$HYPR_COLORS"
     process_template "$TEMPLATES_DIR/waybar-colors.css.tmpl" "$WAYBAR_COLORS"
     process_template "$TEMPLATES_DIR/waybar-colors.css.tmpl" "$WLOGOUT_COLORS"
-    process_template "$TEMPLATES_DIR/waybar-colors.css.tmpl" "$SWAYNC_COLORS"
+    process_template "$TEMPLATES_DIR/swaync-colors.css.tmpl" "$SWAYNC_COLORS"
     process_template "$TEMPLATES_DIR/kitty-colors.conf.tmpl" "$KITTY_COLORS"
     process_template "$TEMPLATES_DIR/rofi-colors.rasi.tmpl" "$ROFI_COLORS"
     process_template "$TEMPLATES_DIR/dunst-colors.conf.tmpl" "$DUNST_COLORS"

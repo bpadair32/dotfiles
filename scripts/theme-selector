@@ -28,7 +28,9 @@ DOTFILES_DIR="$2"
 generator="$3"
 
 # Debug log
-exec &>> /tmp/theme-picker.log
+LOG_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/theme-selector"
+mkdir -p "$LOG_DIR"
+exec &>> "$LOG_DIR/theme-picker.log"
 echo "=== $(date) ==="
 echo "Generator: $generator"
 echo "WALLPAPERS_DIR: $WALLPAPERS_DIR"

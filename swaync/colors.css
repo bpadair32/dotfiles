@@ -53,10 +53,3 @@
 @define-color tertiary_container #613b4e;
 @define-color tertiary_fixed #ffd8e8;
 @define-color tertiary_fixed_dim #ebb8cf;
-
-/* Waybar icon colors */
-@define-color waybar_power #00ff00;
-@define-color waybar_network #00ffff;
-@define-color waybar_apps #0B57A4;
-@define-color waybar_idle #ffffff;
-@define-color waybar_notification #ffff00;
