@@ -20,6 +20,8 @@ UNITS="${WEATHER_UNITS:-F}"  # F or C
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/waybar-weather"
 CACHE_FILE="$CACHE_DIR/weather.json"
 ALERTS_CACHE="$CACHE_DIR/alerts.json"
+LOCK_FILE="$CACHE_DIR/weather.lock"
+OUTPUT_CACHE="$CACHE_DIR/output.json"
 CACHE_MAX_AGE=600  # 10 minutes
 
 mkdir -p "$CACHE_DIR"
@@ -126,14 +128,41 @@ main() {
         exit 0
     fi
 
+    # Check cached final output first (no lock needed for reads)
+    if cache_is_fresh "$OUTPUT_CACHE" "$CACHE_MAX_AGE"; then
+        cat "$OUTPUT_CACHE"
+        return
+    fi
+
+    # Use flock for proper mutual exclusion across monitor instances
+    exec 9>"$LOCK_FILE"
+    if ! flock -n 9; then
+        # Another instance is fetching - wait for it, then use cache
+        flock 9
+        flock -u 9
+        if cache_is_fresh "$OUTPUT_CACHE" "$CACHE_MAX_AGE"; then
+            cat "$OUTPUT_CACHE"
+            return
+        fi
+    fi
+
+    # We hold the lock - re-check cache in case it was populated while waiting
+    if cache_is_fresh "$OUTPUT_CACHE" "$CACHE_MAX_AGE"; then
+        flock -u 9
+        cat "$OUTPUT_CACHE"
+        return
+    fi
+
     # Fetch weather
     local weather
     weather=$(fetch_weather) || {
+        flock -u 9
         echo '{"text": "🌡️ --", "tooltip": "Weather: API error", "class": "error"}'
         exit 0
     }
 
     if [[ -z "$weather" ]]; then
+        flock -u 9
         echo '{"text": "🌡️ --", "tooltip": "Weather: No data", "class": "error"}'
         exit 0
     fi
@@ -210,7 +239,14 @@ main() {
     tooltip_escaped=$(echo -e "$tooltip" | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|/\\n/g')
 
     # Output JSON
-    echo "{\"text\": \"${text}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${alert_class}\"}"
+    local output
+    output="{\"text\": \"${text}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${alert_class}\"}"
+    # Atomic write: write to temp file then rename to avoid partial reads
+    echo "$output" > "$OUTPUT_CACHE.tmp"
+    mv -f "$OUTPUT_CACHE.tmp" "$OUTPUT_CACHE"
+    # Release lock
+    flock -u 9
+    echo "$output"
 }
 
 main "$@"

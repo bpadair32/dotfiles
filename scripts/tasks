@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# tasks - Display count of Obsidian tasks due today for Waybar
+#
+# Scans ~/Documents/Notes for incomplete tasks tagged #task with a 📅 due date
+# matching today's date. Output format: JSON for Waybar custom module.
+#
+
+set -euo pipefail
+
+VAULT_DIR="$HOME/Documents/Notes"
+TODAY=$(date +%Y-%m-%d)
+
+# Find all incomplete tasks with #task tag due today
+# Format: - [ ] #task ... 📅 YYYY-MM-DD
+count=$(grep -r --include='*.md' -P "^[\t ]*- \[ \] #task.*📅 ${TODAY}" "$VAULT_DIR" 2>/dev/null | wc -l)
+
+if [[ $count -eq 0 ]]; then
+    echo '{"text": "", "tooltip": "", "class": "empty"}'
+    exit 0
+fi
+
+# Collect task descriptions for tooltip
+tasks=$(grep -r --include='*.md' -P "^[\t ]*- \[ \] #task.*📅 ${TODAY}" "$VAULT_DIR" 2>/dev/null \
+    | sed 's/.*- \[ \] //' \
+    | sed 's/#[^ ]* *//g' \
+    | sed "s/📅 ${TODAY}//" \
+    | sed 's/^[[:space:]]*//' \
+    | sed 's/[[:space:]]*$//')
+
+# Build tooltip
+tooltip="Tasks Due Today (${count})\n────────────────────"
+while IFS= read -r task; do
+    tooltip+="\n• ${task}"
+done <<< "$tasks"
+
+# Escape for JSON
+tooltip_escaped=$(echo -e "$tooltip" | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|/\\n/g')
+
+# Determine class based on count
+if [[ $count -le 3 ]]; then
+    class="normal"
+elif [[ $count -le 6 ]]; then
+    class="warning"
+else
+    class="critical"
+fi
+
+icon="󰄬"  # nf-md-checkbox_marked_outline
+echo "{\"text\": \"${icon} ${count}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${class}\"}"
