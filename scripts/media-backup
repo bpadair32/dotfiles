@@ -1,0 +1,808 @@
+#!/usr/bin/env python3
+"""
+media-backup: S3 media backup with SHA256 verification, SQLite state, and concurrent uploads.
+"""
+
+import argparse
+import hashlib
+import logging
+import os
+import signal
+import sqlite3
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from fnmatch import fnmatch
+from pathlib import Path
+from typing import Optional
+
+try:
+    import tomllib
+except ImportError:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        tomllib = None
+
+import boto3
+from boto3.s3.transfer import TransferConfig
+from botocore.exceptions import ClientError
+
+try:
+    from rich.console import Console
+    from rich.live import Live
+    from rich.panel import Panel
+    from rich.progress import (
+        BarColumn,
+        BytesTransferredColumn,
+        MofNCompleteColumn,
+        Progress,
+        SpinnerColumn,
+        TaskID,
+        TextColumn,
+        TimeElapsedColumn,
+        TransferSpeedColumn,
+    )
+    from rich.table import Table
+
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+
+log = logging.getLogger("media-backup")
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+DEFAULT_CONFIG = {
+    "s3": {
+        "bucket": "",
+        "prefix": "media",
+        "profile": "default",
+        "region": "us-east-1",
+        "storage_class": "STANDARD_IA",
+    },
+    "transfer": {
+        "workers": 4,
+        "concurrency": 10,
+        "chunk_size_mb": 100,
+        "multipart_threshold_mb": 100,
+    },
+    "state": {
+        "db_path": "~/.local/share/media-backup/state.db",
+    },
+    "source": {
+        "path": "",
+        "exclude_patterns": ["*.DS_Store", "Thumbs.db", "*.tmp", "*.part"],
+    },
+}
+
+
+@dataclass
+class Config:
+    # S3
+    bucket: str = ""
+    prefix: str = "media"
+    profile: str = "default"
+    region: str = "us-east-1"
+    storage_class: str = "STANDARD_IA"
+    # Transfer
+    workers: int = 4
+    concurrency: int = 10
+    chunk_size_mb: int = 100
+    multipart_threshold_mb: int = 100
+    # State
+    db_path: str = "~/.local/share/media-backup/state.db"
+    # Source
+    source_path: str = ""
+    exclude_patterns: list = field(default_factory=lambda: ["*.DS_Store", "Thumbs.db", "*.tmp", "*.part"])
+
+    @classmethod
+    def from_toml(cls, path: Path) -> "Config":
+        if tomllib is None:
+            log.warning("tomllib/tomli not available; TOML config not loaded")
+            return cls()
+        with open(path, "rb") as f:
+            data = tomllib.load(f)
+        c = cls()
+        s3 = data.get("s3", {})
+        c.bucket = s3.get("bucket", c.bucket)
+        c.prefix = s3.get("prefix", c.prefix).strip("/")
+        c.profile = s3.get("profile", c.profile)
+        c.region = s3.get("region", c.region)
+        c.storage_class = s3.get("storage_class", c.storage_class)
+        tr = data.get("transfer", {})
+        c.workers = tr.get("workers", c.workers)
+        c.concurrency = tr.get("concurrency", c.concurrency)
+        c.chunk_size_mb = tr.get("chunk_size_mb", c.chunk_size_mb)
+        c.multipart_threshold_mb = tr.get("multipart_threshold_mb", c.multipart_threshold_mb)
+        st = data.get("state", {})
+        c.db_path = st.get("db_path", c.db_path)
+        src = data.get("source", {})
+        c.source_path = src.get("path", c.source_path)
+        c.exclude_patterns = src.get("exclude_patterns", c.exclude_patterns)
+        return c
+
+    def apply_overrides(self, args: argparse.Namespace) -> None:
+        if args.bucket:
+            self.bucket = args.bucket
+        if args.prefix is not None:
+            self.prefix = args.prefix.strip("/")
+        if args.workers:
+            self.workers = args.workers
+        if args.storage_class:
+            self.storage_class = args.storage_class
+        if args.profile:
+            self.profile = args.profile
+        if args.source_dir:
+            self.source_path = args.source_dir
+
+    @property
+    def chunk_size_bytes(self) -> int:
+        return self.chunk_size_mb * 1024 * 1024
+
+    @property
+    def multipart_threshold_bytes(self) -> int:
+        return self.multipart_threshold_mb * 1024 * 1024
+
+
+# ---------------------------------------------------------------------------
+# SQLite state database
+# ---------------------------------------------------------------------------
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS files (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    local_path    TEXT    NOT NULL UNIQUE,
+    s3_key        TEXT    NOT NULL,
+    file_size     INTEGER NOT NULL,
+    mtime         REAL    NOT NULL,
+    sha256        TEXT,
+    etag          TEXT,
+    status        TEXT    NOT NULL DEFAULT 'pending',
+    attempts      INTEGER NOT NULL DEFAULT 0,
+    last_attempt  REAL,
+    error_msg     TEXT,
+    uploaded_at   REAL
+);
+CREATE INDEX IF NOT EXISTS idx_status     ON files(status);
+CREATE INDEX IF NOT EXISTS idx_local_path ON files(local_path);
+"""
+
+
+class StateDB:
+    def __init__(self, db_path: str) -> None:
+        path = Path(db_path).expanduser()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self._conn = sqlite3.connect(str(path), check_same_thread=False)
+        self._conn.row_factory = sqlite3.Row
+        self._conn.executescript(SCHEMA)
+        self._conn.commit()
+        # Per-connection lock for thread safety
+        import threading
+        self._lock = threading.Lock()
+
+    def close(self) -> None:
+        self._conn.close()
+
+    def get(self, local_path: str) -> Optional[sqlite3.Row]:
+        with self._lock:
+            cur = self._conn.execute(
+                "SELECT * FROM files WHERE local_path = ?", (local_path,)
+            )
+            return cur.fetchone()
+
+    def upsert(self, local_path: str, s3_key: str, file_size: int, mtime: float) -> None:
+        with self._lock:
+            self._conn.execute(
+                """
+                INSERT INTO files (local_path, s3_key, file_size, mtime, status)
+                VALUES (?, ?, ?, ?, 'pending')
+                ON CONFLICT(local_path) DO UPDATE SET
+                    s3_key = excluded.s3_key,
+                    file_size = excluded.file_size,
+                    mtime = excluded.mtime
+                """,
+                (local_path, s3_key, file_size, mtime),
+            )
+            self._conn.commit()
+
+    def update_hash(self, local_path: str, sha256: str) -> None:
+        with self._lock:
+            self._conn.execute(
+                "UPDATE files SET sha256 = ? WHERE local_path = ?",
+                (sha256, local_path),
+            )
+            self._conn.commit()
+
+    def mark_uploading(self, local_path: str) -> None:
+        with self._lock:
+            self._conn.execute(
+                """
+                UPDATE files SET status = 'uploading',
+                    attempts = attempts + 1,
+                    last_attempt = ?
+                WHERE local_path = ?
+                """,
+                (time.time(), local_path),
+            )
+            self._conn.commit()
+
+    def mark_completed(self, local_path: str, etag: str) -> None:
+        with self._lock:
+            self._conn.execute(
+                """
+                UPDATE files SET status = 'completed',
+                    etag = ?,
+                    error_msg = NULL,
+                    uploaded_at = ?
+                WHERE local_path = ?
+                """,
+                (etag, time.time(), local_path),
+            )
+            self._conn.commit()
+
+    def mark_failed(self, local_path: str, error: str) -> None:
+        with self._lock:
+            self._conn.execute(
+                "UPDATE files SET status = 'failed', error_msg = ? WHERE local_path = ?",
+                (error, local_path),
+            )
+            self._conn.commit()
+
+    def mark_skipped(self, local_path: str) -> None:
+        with self._lock:
+            self._conn.execute(
+                "UPDATE files SET status = 'completed' WHERE local_path = ?",
+                (local_path,),
+            )
+            self._conn.commit()
+
+    def get_failed(self) -> list:
+        with self._lock:
+            cur = self._conn.execute(
+                "SELECT * FROM files WHERE status = 'failed'"
+            )
+            return cur.fetchall()
+
+    def get_completed(self) -> list:
+        with self._lock:
+            cur = self._conn.execute(
+                "SELECT * FROM files WHERE status = 'completed'"
+            )
+            return cur.fetchall()
+
+    def stats(self) -> dict:
+        with self._lock:
+            cur = self._conn.execute(
+                "SELECT status, COUNT(*) as cnt, SUM(file_size) as total_bytes FROM files GROUP BY status"
+            )
+            return {row["status"]: {"count": row["cnt"], "bytes": row["total_bytes"] or 0} for row in cur}
+
+
+# ---------------------------------------------------------------------------
+# File scanning
+# ---------------------------------------------------------------------------
+
+@dataclass
+class FileRecord:
+    local_path: Path
+    s3_key: str
+    size: int
+    mtime: float
+
+
+def should_exclude(path: Path, patterns: list) -> bool:
+    for pattern in patterns:
+        if fnmatch(path.name, pattern):
+            return True
+    return False
+
+
+def scan(source_dir: Path, prefix: str, exclude_patterns: list):
+    """Yield FileRecord objects for all files under source_dir."""
+    for root, dirs, files in os.walk(source_dir, followlinks=False):
+        # Skip hidden directories
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for fname in sorted(files):
+            fpath = Path(root) / fname
+            if should_exclude(fpath, exclude_patterns):
+                log.debug("Excluding %s", fpath)
+                continue
+            try:
+                stat = fpath.stat()
+            except OSError as e:
+                log.warning("Cannot stat %s: %s", fpath, e)
+                continue
+            rel = fpath.relative_to(source_dir)
+            s3_key = f"{prefix}/{rel}".lstrip("/") if prefix else str(rel)
+            yield FileRecord(
+                local_path=fpath,
+                s3_key=s3_key,
+                size=stat.st_size,
+                mtime=stat.st_mtime,
+            )
+
+
+# ---------------------------------------------------------------------------
+# SHA256
+# ---------------------------------------------------------------------------
+
+def compute_sha256(path: Path, chunk_size: int = 8 * 1024 * 1024) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while True:
+            block = f.read(chunk_size)
+            if not block:
+                break
+            h.update(block)
+    return h.hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# Uploader
+# ---------------------------------------------------------------------------
+
+class Uploader:
+    def __init__(self, config: Config, db: StateDB, dry_run: bool = False) -> None:
+        self.config = config
+        self.db = db
+        self.dry_run = dry_run
+        session = boto3.Session(
+            profile_name=config.profile,
+            region_name=config.region,
+        )
+        self.s3 = session.client("s3")
+        self.transfer_config = TransferConfig(
+            multipart_threshold=config.multipart_threshold_bytes,
+            max_concurrency=config.concurrency,
+            multipart_chunksize=config.chunk_size_bytes,
+            use_threads=True,
+        )
+
+    def head_object(self, s3_key: str) -> Optional[dict]:
+        try:
+            return self.s3.head_object(Bucket=self.config.bucket, Key=s3_key)
+        except ClientError as e:
+            if e.response["Error"]["Code"] in ("404", "NoSuchKey"):
+                return None
+            raise
+
+    def upload_file(
+        self,
+        record: FileRecord,
+        progress_callback=None,
+    ) -> str:
+        """Upload a single file. Returns the ETag on success."""
+        extra_args = {
+            "StorageClass": self.config.storage_class,
+            "ChecksumAlgorithm": "SHA256",
+        }
+        self.s3.upload_file(
+            Filename=str(record.local_path),
+            Bucket=self.config.bucket,
+            Key=record.s3_key,
+            ExtraArgs=extra_args,
+            Config=self.transfer_config,
+            Callback=progress_callback,
+        )
+        head = self.s3.head_object(Bucket=self.config.bucket, Key=record.s3_key)
+        return head.get("ETag", "").strip('"')
+
+    def process_file(
+        self,
+        record: FileRecord,
+        progress_callback=None,
+    ) -> str:
+        """
+        Apply upload decision logic. Returns: 'uploaded' | 'skipped' | 'failed'
+        """
+        local_path_str = str(record.local_path)
+
+        # Check DB record
+        row = self.db.get(local_path_str)
+        if row and row["status"] == "completed":
+            # Fast path: size and mtime unchanged
+            if row["file_size"] == record.size and abs(row["mtime"] - record.mtime) < 0.01:
+                log.debug("Skip (DB): %s", record.local_path.name)
+                return "skipped"
+            # File changed — fall through to re-upload
+
+        # Upsert into DB
+        self.db.upsert(local_path_str, record.s3_key, record.size, record.mtime)
+
+        if self.dry_run:
+            return "dry-run"
+
+        # Compute SHA256
+        log.debug("Hashing %s", record.local_path.name)
+        try:
+            sha256 = compute_sha256(record.local_path)
+        except OSError as e:
+            self.db.mark_failed(local_path_str, str(e))
+            return "failed"
+        self.db.update_hash(local_path_str, sha256)
+
+        # Check S3
+        head = self.head_object(record.s3_key)
+        if head and head.get("ContentLength") == record.size:
+            log.debug("Skip (S3): %s", record.local_path.name)
+            etag = head.get("ETag", "").strip('"')
+            self.db.mark_completed(local_path_str, etag)
+            return "skipped"
+
+        # Upload
+        self.db.mark_uploading(local_path_str)
+        try:
+            etag = self.upload_file(record, progress_callback=progress_callback)
+            self.db.mark_completed(local_path_str, etag)
+            log.info("Uploaded: %s → s3://%s/%s", record.local_path.name, self.config.bucket, record.s3_key)
+            return "uploaded"
+        except ClientError as e:
+            msg = str(e)
+            log.error("Failed %s: %s", record.local_path.name, msg)
+            self.db.mark_failed(local_path_str, msg)
+            return "failed"
+        except OSError as e:
+            msg = str(e)
+            log.error("Failed %s: %s", record.local_path.name, msg)
+            self.db.mark_failed(local_path_str, msg)
+            return "failed"
+
+    def clean_incomplete(self) -> None:
+        """Abort multipart uploads older than 24 hours."""
+        cutoff = time.time() - 86400
+        paginator = self.s3.get_paginator("list_multipart_uploads")
+        aborted = 0
+        try:
+            for page in paginator.paginate(Bucket=self.config.bucket):
+                for upload in page.get("Uploads", []):
+                    initiated = upload["Initiated"].timestamp()
+                    if initiated < cutoff:
+                        self.s3.abort_multipart_upload(
+                            Bucket=self.config.bucket,
+                            Key=upload["Key"],
+                            UploadId=upload["UploadId"],
+                        )
+                        log.info("Aborted multipart upload: %s (%s)", upload["Key"], upload["UploadId"])
+                        aborted += 1
+        except ClientError as e:
+            log.error("Error listing multipart uploads: %s", e)
+        print(f"Aborted {aborted} incomplete multipart upload(s).")
+
+    def verify_completed(self, db: StateDB) -> None:
+        """Re-verify all completed files exist in S3 with correct size."""
+        rows = db.get_completed()
+        ok = failed = missing = 0
+        for row in rows:
+            head = self.head_object(row["s3_key"])
+            if head is None:
+                log.warning("MISSING in S3: %s", row["s3_key"])
+                missing += 1
+                db.mark_failed(row["local_path"], "missing from S3")
+            elif head.get("ContentLength") != row["file_size"]:
+                log.warning(
+                    "SIZE MISMATCH: %s (local=%d, s3=%d)",
+                    row["s3_key"], row["file_size"], head.get("ContentLength", 0)
+                )
+                failed += 1
+                db.mark_failed(row["local_path"], "S3 size mismatch")
+            else:
+                ok += 1
+        print(f"Verify complete: {ok} OK, {missing} missing, {failed} size mismatch")
+
+
+# ---------------------------------------------------------------------------
+# Progress (rich)
+# ---------------------------------------------------------------------------
+
+def _format_bytes(n: int) -> str:
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if n < 1024:
+            return f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} PB"
+
+
+def run_with_rich_progress(
+    records: list,
+    uploader: Uploader,
+    workers: int,
+    dry_run: bool,
+) -> dict:
+    console = Console()
+    overall = Progress(
+        SpinnerColumn(),
+        TextColumn("[bold blue]{task.description}"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn("•"),
+        BytesTransferredColumn(),
+        TextColumn("•"),
+        TransferSpeedColumn(),
+        TextColumn("•"),
+        TimeElapsedColumn(),
+        console=console,
+        transient=False,
+    )
+    file_progress = Progress(
+        TextColumn("  [cyan]{task.description}"),
+        BarColumn(),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        BytesTransferredColumn(),
+        console=console,
+        transient=True,
+    )
+
+    total_bytes = sum(r.size for r in records)
+    overall_task = overall.add_task("Overall", total=len(records))
+    bytes_task = overall.add_task("Bytes", total=total_bytes, visible=False)
+
+    counters = {"uploaded": 0, "skipped": 0, "failed": 0, "dry-run": 0}
+    shutdown = False
+
+    def handle_interrupt(sig, frame):
+        nonlocal shutdown
+        shutdown = True
+        console.print("\n[yellow]Interrupt received — finishing in-flight uploads…[/yellow]")
+
+    signal.signal(signal.SIGINT, handle_interrupt)
+
+    def upload_one(record: FileRecord) -> tuple:
+        if shutdown:
+            return record, "skipped"
+
+        if RICH_AVAILABLE and not dry_run:
+            file_task: TaskID = file_progress.add_task(
+                record.local_path.name[:60], total=record.size
+            )
+            bytes_so_far = 0
+
+            def cb(transferred: int) -> None:
+                nonlocal bytes_so_far
+                delta = transferred - bytes_so_far
+                bytes_so_far = transferred
+                file_progress.advance(file_task, delta)
+                overall.advance(bytes_task, delta)
+
+            result = uploader.process_file(record, progress_callback=cb)
+            file_progress.remove_task(file_task)
+        else:
+            result = uploader.process_file(record)
+
+        return record, result
+
+    with Live(console=console, refresh_per_second=10):
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {executor.submit(upload_one, r): r for r in records}
+            for future in as_completed(futures):
+                try:
+                    rec, result = future.result()
+                    counters[result] = counters.get(result, 0) + 1
+                    overall.advance(overall_task, 1)
+                    if result == "skipped":
+                        overall.advance(bytes_task, rec.size)
+                except Exception as e:
+                    log.error("Unexpected error: %s", e)
+                    counters["failed"] += 1
+                    overall.advance(overall_task, 1)
+
+    return counters
+
+
+def run_plain(records: list, uploader: Uploader, workers: int) -> dict:
+    counters: dict = {"uploaded": 0, "skipped": 0, "failed": 0, "dry-run": 0}
+    shutdown = False
+
+    def handle_interrupt(sig, frame):
+        nonlocal shutdown
+        shutdown = True
+        print("\nInterrupt received — finishing in-flight uploads…", file=sys.stderr)
+
+    signal.signal(signal.SIGINT, handle_interrupt)
+
+    def upload_one(record: FileRecord) -> tuple:
+        if shutdown:
+            return record, "skipped"
+        result = uploader.process_file(record)
+        return record, result
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {executor.submit(upload_one, r): r for r in records}
+        for future in as_completed(futures):
+            try:
+                rec, result = future.result()
+                counters[result] = counters.get(result, 0) + 1
+            except Exception as e:
+                log.error("Unexpected error: %s", e)
+                counters["failed"] += 1
+
+    return counters
+
+
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="media-backup",
+        description="Back up media files to Amazon S3 with SHA256 verification and resume support.",
+    )
+    p.add_argument("source_dir", nargs="?", default=None, metavar="SOURCE_DIR",
+                   help="Override source directory from config")
+    p.add_argument("--config", default="./backup.toml", metavar="PATH",
+                   help="Config file path [default: ./backup.toml]")
+    p.add_argument("--bucket", default=None, metavar="NAME",
+                   help="S3 bucket (overrides config)")
+    p.add_argument("--prefix", default=None, metavar="PREFIX",
+                   help="S3 key prefix (overrides config)")
+    p.add_argument("--workers", type=int, default=None, metavar="N",
+                   help="Parallel file uploads (overrides config)")
+    p.add_argument("--dry-run", action="store_true",
+                   help="Scan and report without uploading")
+    p.add_argument("--verify", action="store_true",
+                   help="Re-verify completed files against S3")
+    p.add_argument("--retry-failed", action="store_true",
+                   help="Reset failed files to pending and retry them")
+    p.add_argument("--clean-incomplete", action="store_true",
+                   help="Abort abandoned multipart uploads older than 24h")
+    p.add_argument("--storage-class", default=None, metavar="CLASS",
+                   help="S3 storage class (overrides config)")
+    p.add_argument("--profile", default=None, metavar="NAME",
+                   help="AWS credentials profile (overrides config)")
+    p.add_argument("--verbose", action="store_true",
+                   help="Enable debug logging")
+    return p
+
+
+# ---------------------------------------------------------------------------
+# main
+# ---------------------------------------------------------------------------
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+    # Load config
+    config_path = Path(args.config)
+    if config_path.exists():
+        log.debug("Loading config from %s", config_path)
+        config = Config.from_toml(config_path)
+    else:
+        if args.config != "./backup.toml":
+            log.error("Config file not found: %s", config_path)
+            return 1
+        config = Config()
+
+    config.apply_overrides(args)
+
+    if not config.bucket and not args.dry_run and not args.verify and not args.clean_incomplete:
+        log.error("S3 bucket not specified. Set in config or pass --bucket.")
+        return 1
+
+    # Open state DB
+    db = StateDB(config.db_path)
+
+    # Handle special modes
+    if args.clean_incomplete:
+        uploader = Uploader(config, db)
+        uploader.clean_incomplete()
+        db.close()
+        return 0
+
+    if args.verify:
+        if not config.bucket:
+            log.error("S3 bucket required for --verify")
+            return 1
+        uploader = Uploader(config, db)
+        uploader.verify_completed(db)
+        db.close()
+        return 0
+
+    # Resolve source directory
+    if not config.source_path:
+        log.error("Source path not specified. Set in config or pass SOURCE_DIR.")
+        return 1
+
+    source_dir = Path(config.source_path).expanduser().resolve()
+    if not source_dir.is_dir():
+        log.error("Source directory does not exist: %s", source_dir)
+        return 1
+
+    # Handle retry-failed: reset failed records to pending
+    if args.retry_failed:
+        with db._lock:
+            db._conn.execute(
+                "UPDATE files SET status = 'pending', error_msg = NULL WHERE status = 'failed'"
+            )
+            db._conn.commit()
+        log.info("Reset failed files to pending.")
+
+    # Scan
+    log.info("Scanning %s …", source_dir)
+    all_records = list(scan(source_dir, config.prefix, config.exclude_patterns))
+    total_size = sum(r.size for r in all_records)
+    log.info(
+        "Found %d files (%s)", len(all_records), _format_bytes(total_size)
+    )
+
+    if args.dry_run:
+        print(f"\nDry run: {len(all_records)} files, {_format_bytes(total_size)} total")
+        print(f"Bucket:  s3://{config.bucket or '<not set>'}/{config.prefix}")
+        print(f"Workers: {config.workers} files × {config.concurrency} parts = "
+              f"{config.workers * config.concurrency} max concurrent S3 requests")
+        # Show per-status breakdown from DB
+        stats = db.stats()
+        if stats:
+            print("\nDatabase status:")
+            for status, info in sorted(stats.items()):
+                print(f"  {status:12s}: {info['count']:6d} files  ({_format_bytes(info['bytes'])})")
+        db.close()
+        return 0
+
+    if not all_records:
+        print("No files to upload.")
+        db.close()
+        return 0
+
+    # Filter: skip completed (fast path before threading)
+    to_upload = []
+    skipped_fast = 0
+    for rec in all_records:
+        row = db.get(str(rec.local_path))
+        if row and row["status"] == "completed":
+            if row["file_size"] == rec.size and abs(row["mtime"] - rec.mtime) < 0.01:
+                skipped_fast += 1
+                continue
+        to_upload.append(rec)
+
+    log.info(
+        "After fast-skip: %d to process, %d already done",
+        len(to_upload), skipped_fast,
+    )
+
+    uploader = Uploader(config, db, dry_run=args.dry_run)
+
+    # Run uploads
+    if RICH_AVAILABLE:
+        counters = run_with_rich_progress(to_upload, uploader, config.workers, args.dry_run)
+    else:
+        counters = run_plain(to_upload, uploader, config.workers)
+
+    counters["skipped"] = counters.get("skipped", 0) + skipped_fast
+
+    # Summary
+    print("\n--- Summary ---")
+    uploaded_bytes = sum(
+        r.size for r in all_records
+        if db.get(str(r.local_path)) and db.get(str(r.local_path))["status"] == "completed"
+    )
+    print(f"  Uploaded : {counters.get('uploaded', 0)}")
+    print(f"  Skipped  : {counters.get('skipped', 0)}")
+    print(f"  Failed   : {counters.get('failed', 0)}")
+    print(f"  Total    : {len(all_records)} files ({_format_bytes(total_size)})")
+
+    failed_rows = db.get_failed()
+    if failed_rows:
+        print(f"\n{len(failed_rows)} failed file(s) — re-run with --retry-failed to retry:")
+        for row in failed_rows[:10]:
+            print(f"  {row['local_path']}: {row['error_msg']}")
+        if len(failed_rows) > 10:
+            print(f"  … and {len(failed_rows) - 10} more")
+
+    db.close()
+    return 1 if counters.get("failed", 0) > 0 else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

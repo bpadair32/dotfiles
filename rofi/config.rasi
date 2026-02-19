@@ -1,11 +1,92 @@
+@theme "/dev/null"
 @import "colors.rasi"
+
 configuration {
-  display-drun: "Applications";
-  display-window: "Windows";
-  drun-display-format: "{icon} {name}";
-  font: "JetBrainsMono Nerd Font Medium 10";
-  modi: "window,run,drun";
+  display-drun: "";
+  display-window: "";
+  drun-display-format: "{name}";
+  font: "JetBrainsMono Nerd Font Medium 11";
+  modi: "drun,window";
   show-icons: true;
   icon-theme: "Papirus";
   case-sensitive: false;
+  hover-select: true;
+  me-select-entry: "";
+  me-accept-entry: "MousePrimary";
+}
+
+window {
+  width: 680px;
+  background-color: @background;
+  border: 2px solid;
+  border-color: @border-color;
+  border-radius: 16px;
+  padding: 0;
+}
+
+mainbox {
+  background-color: transparent;
+  children: [ inputbar, listview ];
+  spacing: 0;
+  padding: 0;
+}
+
+inputbar {
+  background-color: @background-alt;
+  border-radius: 16px 16px 0 0;
+  padding: 16px 20px;
+  spacing: 12px;
+  children: [ prompt, entry ];
+}
+
+prompt {
+  background-color: transparent;
+  font: "JetBrainsMono Nerd Font 14";
+  color: @selected;
+  vertical-align: 0.5;
+}
+
+entry {
+  background-color: transparent;
+  color: @foreground;
+  placeholder: "Search...";
+  placeholder-color: @border-color;
+  vertical-align: 0.5;
+}
+
+listview {
+  background-color: transparent;
+  columns: 1;
+  lines: 8;
+  padding: 8px 0;
+  fixed-height: true;
+  scrollbar: false;
+}
+
+element {
+  background-color: transparent;
+  padding: 10px 20px;
+  spacing: 12px;
+  orientation: horizontal;
+}
+
+element selected.normal {
+  background-color: @selected-normal-background;
+  border-radius: 0;
+}
+
+element-icon {
+  background-color: transparent;
+  size: 28px;
+  vertical-align: 0.5;
+}
+
+element-text {
+  background-color: transparent;
+  color: @foreground;
+  vertical-align: 0.5;
+}
+
+element-text selected.normal {
+  color: @selected-normal-foreground;
 }

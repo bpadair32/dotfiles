@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# cliphist-rofi-img - Clipboard history picker with image thumbnail support
+#
+# Wraps cliphist + rofi to display image thumbnails inline for image entries.
+# Thumbnails are cached in XDG_CACHE_HOME to avoid re-decoding on each open.
+#
+
+set -euo pipefail
+
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/cliphist"
+mkdir -p "$CACHE_DIR"
+
+# Build rofi input: text entries pass through as-is, image entries get an icon
+rofi_input() {
+    while IFS= read -r line; do
+        id=$(printf '%s' "$line" | cut -f1)
+        cache_file="$CACHE_DIR/${id}.png"
+
+        if [[ -f "$cache_file" ]]; then
+            printf '%s\0icon\x1f%s\n' "$line" "$cache_file"
+            continue
+        fi
+
+        tmp=$(mktemp)
+        printf '%s' "$line" | cliphist decode > "$tmp" 2>/dev/null
+        mime=$(file --mime-type -b "$tmp" 2>/dev/null)
+
+        case "$mime" in
+            image/*)
+                mv "$tmp" "$cache_file"
+                printf '%s\0icon\x1f%s\n' "$line" "$cache_file"
+                ;;
+            *)
+                rm -f "$tmp"
+                printf '%s\n' "$line"
+                ;;
+        esac
+    done < <(cliphist list)
+}
+
+selected=$(rofi_input | rofi -dmenu -p "Clipboard" -show-icons \
+    -theme-str 'window { width: 900px; } listview { lines: 8; } element { orientation: horizontal; padding: 8px; } element-icon { size: 128px; } element-text { vertical-align: 0.5; }')
+
+[[ -n "$selected" ]] && printf '%s' "$selected" | cliphist decode | wl-copy

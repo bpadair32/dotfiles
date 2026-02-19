@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+#
+# emoji-picker - Rofi-based emoji picker for Wayland
+#
+# Parses CLDR annotation data to build a searchable emoji list.
+# Selected emoji is copied to clipboard via wl-copy and typed via wtype.
+#
+
+set -euo pipefail
+
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/emoji-picker"
+CACHE_FILE="$CACHE_DIR/emojis.txt"
+HISTORY_FILE="$CACHE_DIR/history.txt"
+
+CLDR_BASE="/usr/share/unicode/cldr/common/annotations/en.xml"
+CLDR_DERIVED="/usr/share/unicode/cldr/common/annotationsDerived/en.xml"
+EMOJI_DATA="/usr/share/unicode/ucd/emoji/emoji-data.txt"
+
+mkdir -p "$CACHE_DIR"
+touch "$HISTORY_FILE"
+
+# Build emoji cache from CLDR data
+build_cache() {
+    python3 - "$CLDR_BASE" "$CLDR_DERIVED" "$EMOJI_DATA" "$CACHE_FILE" << 'PYEOF'
+import xml.etree.ElementTree as ET
+import sys, re
+
+cldr_base, cldr_derived, emoji_data_path, out_path = sys.argv[1:5]
+
+# Parse emoji-data.txt to get the set of Emoji_Presentation codepoints
+emoji_cps = set()
+with open(emoji_data_path) as f:
+    for line in f:
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        if 'Emoji_Presentation' not in line:
+            continue
+        field = line.split(';')[0].strip()
+        if '..' in field:
+            start, end = field.split('..')
+            for cp in range(int(start, 16), int(end, 16) + 1):
+                emoji_cps.add(cp)
+        else:
+            emoji_cps.add(int(field, 16))
+
+def is_emoji(s):
+    """Check if string contains at least one Emoji_Presentation character or ZWJ sequence."""
+    if len(s) > 1:
+        return True  # multi-char sequences (flags, ZWJ, skin tones) are emojis
+    return ord(s) in emoji_cps
+
+# Parse both CLDR annotation files
+entries = {}
+for xml_file in [cldr_base, cldr_derived]:
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+    names = {}
+    keywords = {}
+    for ann in root.iter('annotation'):
+        cp = ann.get('cp', '')
+        if not cp:
+            continue
+        if ann.get('type') == 'tts':
+            names[cp] = ann.text.strip() if ann.text else ''
+        else:
+            keywords[cp] = ann.text.strip() if ann.text else ''
+    for cp in names:
+        if is_emoji(cp):
+            entries[cp] = (names[cp], keywords.get(cp, ''))
+
+# Write cache
+with open(out_path, 'w') as f:
+    for cp, (name, kw) in entries.items():
+        if kw:
+            f.write(f'{cp}  {name}  ({kw})\n')
+        else:
+            f.write(f'{cp}  {name}\n')
+PYEOF
+}
+
+# Rebuild cache if missing or older than 30 days
+if [[ ! -f "$CACHE_FILE" ]] || [[ $(find "$CACHE_FILE" -mtime +30 2>/dev/null) ]]; then
+    build_cache
+fi
+
+# Prepend frequently used emojis from history
+get_sorted_list() {
+    if [[ -s "$HISTORY_FILE" ]]; then
+        # Count frequency, sort by most used
+        local frequent
+        frequent=$(sort "$HISTORY_FILE" | uniq -c | sort -rn | awk '{$1=""; print substr($0,2)}')
+
+        # Put frequent ones first, then the rest
+        {
+            echo "$frequent"
+            grep -Fxv -f <(echo "$frequent") "$CACHE_FILE" 2>/dev/null || cat "$CACHE_FILE"
+        }
+    else
+        cat "$CACHE_FILE"
+    fi
+}
+
+# Launch rofi
+selected=$(get_sorted_list | rofi -dmenu -i -p "Emoji" \
+    -theme-str 'window { width: 500px; } listview { lines: 10; }' \
+    2>/dev/null) || exit 0
+
+# Extract just the emoji character (first field before spaces)
+emoji=$(echo "$selected" | cut -d' ' -f1)
+
+if [[ -n "$emoji" ]]; then
+    # Record in history
+    echo "$selected" >> "$HISTORY_FILE"
+    # Keep history to last 500 entries
+    tail -500 "$HISTORY_FILE" > "$HISTORY_FILE.tmp" && mv "$HISTORY_FILE.tmp" "$HISTORY_FILE"
+
+    # Copy to clipboard
+    echo -n "$emoji" | wl-copy
+
+    # Type it directly if wtype is available
+    if command -v wtype &>/dev/null; then
+        sleep 0.1
+        wtype "$emoji"
+    fi
+fi

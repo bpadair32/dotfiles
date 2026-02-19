@@ -11,6 +11,7 @@ set -euo pipefail
 # Cache settings
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/waybar-updates"
 CACHE_FILE="$CACHE_DIR/updates.json"
+LOCK_FILE="$CACHE_DIR/updates.lock"
 CACHE_MAX_AGE=7200  # 2 hours
 
 mkdir -p "$CACHE_DIR"
@@ -23,6 +24,15 @@ cache_is_fresh() {
     else
         return 1
     fi
+}
+
+# Wait for another instance to finish and use its cache
+wait_for_lock() {
+    local waited=0
+    while [[ -f "$LOCK_FILE" ]] && [[ $waited -lt 120 ]]; do
+        sleep 2
+        waited=$((waited + 2))
+    done
 }
 
 # Count flatpak updates
@@ -52,6 +62,25 @@ main() {
     local flatpak_count dnf_count total class
 
     # Check cache first
+    if cache_is_fresh; then
+        cat "$CACHE_FILE"
+        return
+    fi
+
+    # If another instance is already updating, wait for it and use cache
+    if [[ -f "$LOCK_FILE" ]]; then
+        wait_for_lock
+        if cache_is_fresh; then
+            cat "$CACHE_FILE"
+            return
+        fi
+    fi
+
+    # Acquire lock
+    echo $$ > "$LOCK_FILE"
+    trap 'rm -f "$LOCK_FILE"' EXIT
+
+    # Double-check cache after acquiring lock
     if cache_is_fresh; then
         cat "$CACHE_FILE"
         return
