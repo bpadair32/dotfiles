@@ -2,7 +2,8 @@
   "modules-left": [
     "custom/apps",
     "hyprland/workspaces",
-    "custom/updates"
+    "custom/updates",
+    "custom/tasks"
   ],
   "modules-center": [
     "hyprland/window",
@@ -191,6 +192,13 @@
     "interval": 7200,
     "exec": "~/repos/dotfiles/scripts/updates",
     "on-click": "kitty --class floating -e bash -c 'echo \"=== DNF Updates ===\"; dnf check-update; echo; echo \"=== Flatpak Updates ===\"; flatpak remote-ls --updates; read -p \"Press Enter to close...\"'",
+    "tooltip": true
+  },
+  "custom/tasks": {
+    "format": "{}",
+    "return-type": "json",
+    "interval": 600,
+    "exec": "~/repos/dotfiles/scripts/tasks",
     "tooltip": true
   },
   "custom/media": {
