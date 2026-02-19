@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# tasks - Display count of Obsidian tasks due today for Waybar
+# tasks - Display count of Obsidian tasks due today or overdue for Waybar
 #
 # Scans ~/Documents/Notes for incomplete tasks tagged #task with a 📅 due date
-# matching today's date. Output format: JSON for Waybar custom module.
+# matching today's date or earlier. Output format: JSON for Waybar custom module.
 #
 
 set -euo pipefail
@@ -11,40 +11,76 @@ set -euo pipefail
 VAULT_DIR="$HOME/Documents/Notes"
 TODAY=$(date +%Y-%m-%d)
 
-# Find all incomplete tasks with #task tag due today
-# Format: - [ ] #task ... 📅 YYYY-MM-DD
-count=$(grep -r --include='*.md' -P "^[\t ]*- \[ \] #task.*📅 ${TODAY}" "$VAULT_DIR" 2>/dev/null | wc -l)
+# Find all incomplete tasks with #task tag and any due date
+mapfile -t all_tasks < <(grep -r --include='*.md' -P "^[\t ]*- \[ \] #task.*📅 \d{4}-\d{2}-\d{2}" "$VAULT_DIR" 2>/dev/null || true)
 
-if [[ $count -eq 0 ]]; then
+if [[ ${#all_tasks[@]} -eq 0 ]]; then
     echo '{"text": "", "tooltip": "", "class": "empty"}'
     exit 0
 fi
 
-# Collect task descriptions for tooltip
-tasks=$(grep -r --include='*.md' -P "^[\t ]*- \[ \] #task.*📅 ${TODAY}" "$VAULT_DIR" 2>/dev/null \
-    | sed 's/.*- \[ \] //' \
-    | sed 's/#[^ ]* *//g' \
-    | sed "s/📅 ${TODAY}//" \
-    | sed 's/^[[:space:]]*//' \
-    | sed 's/[[:space:]]*$//')
+today_lines=()
+overdue_lines=()
 
-# Build tooltip
-tooltip="Tasks Due Today (${count})\n────────────────────"
-while IFS= read -r task; do
-    tooltip+="\n• ${task}"
-done <<< "$tasks"
+for line in "${all_tasks[@]}"; do
+    task_date=$(echo "$line" | grep -oP '📅 \K\d{4}-\d{2}-\d{2}')
+    if [[ "$task_date" == "$TODAY" ]]; then
+        today_lines+=("$line")
+    elif [[ "$task_date" < "$TODAY" ]]; then
+        overdue_lines+=("$line")
+    fi
+done
+
+today_count=${#today_lines[@]}
+overdue_count=${#overdue_lines[@]}
+total_count=$((today_count + overdue_count))
+
+if [[ $total_count -eq 0 ]]; then
+    echo '{"text": "", "tooltip": "", "class": "empty"}'
+    exit 0
+fi
+
+# Strip raw task line down to a readable description
+clean_task() {
+    echo "$1" \
+        | sed 's/.*- \[ \] //' \
+        | sed 's/#[^ ]* *//g' \
+        | sed 's/📅 [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}//' \
+        | sed 's/^[[:space:]]*//' \
+        | sed 's/[[:space:]]*$//'
+}
+
+# Build tooltip — overdue section first, then due today
+tooltip=""
+
+if [[ $overdue_count -gt 0 ]]; then
+    tooltip="Overdue (${overdue_count})\n────────────────────"
+    for line in "${overdue_lines[@]}"; do
+        tooltip+="\n• $(clean_task "$line")"
+    done
+fi
+
+if [[ $today_count -gt 0 ]]; then
+    [[ -n "$tooltip" ]] && tooltip+="\n\n"
+    tooltip+="Due Today (${today_count})\n────────────────────"
+    for line in "${today_lines[@]}"; do
+        tooltip+="\n• $(clean_task "$line")"
+    done
+fi
 
 # Escape for JSON
 tooltip_escaped=$(echo -e "$tooltip" | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|/\\n/g')
 
-# Determine class based on count
-if [[ $count -le 3 ]]; then
+# Any overdue tasks force critical class; otherwise scale by total count
+if [[ $overdue_count -gt 0 ]]; then
+    class="critical"
+elif [[ $total_count -le 3 ]]; then
     class="normal"
-elif [[ $count -le 6 ]]; then
+elif [[ $total_count -le 6 ]]; then
     class="warning"
 else
     class="critical"
 fi
 
 icon="󰄬"  # nf-md-checkbox_marked_outline
-echo "{\"text\": \"${icon} ${count}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${class}\"}"
+echo "{\"text\": \"${icon} ${total_count}\", \"tooltip\": \"${tooltip_escaped}\", \"class\": \"${class}\"}"
