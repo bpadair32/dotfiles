@@ -96,3 +96,6 @@ network = "#94e2d5"
 apps = "#89b4fa"
 idle = "#cdd6f4"
 notification = "#f9e2af"
+
+[neovim]
+colorscheme = "catppuccin-mocha"

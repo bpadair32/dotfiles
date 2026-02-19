@@ -93,3 +93,6 @@ network = "#00ffff"
 apps = "#0B57A4"
 idle = "#ffffff"
 notification = "#ffff00"
+
+[neovim]
+colorscheme = "tokyonight-night"

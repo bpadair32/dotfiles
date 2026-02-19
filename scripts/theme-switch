@@ -86,6 +86,9 @@ parse_theme_toml() {
                 "colors.waybar")
                     export_key="WAYBAR_${key^^}"
                     ;;
+                "neovim")
+                    export_key="NVIM_${key^^}"
+                    ;;
                 *)
                     continue
                     ;;
@@ -253,6 +256,11 @@ apply_theme() {
     process_template "$TEMPLATES_DIR/dunst-colors.conf.tmpl" "$DUNST_COLORS"
     process_template "$TEMPLATES_DIR/gtk-colors.css.tmpl" "$GTK3_CSS"
     process_template "$TEMPLATES_DIR/gtk-colors.css.tmpl" "$GTK4_CSS"
+
+    # Generate Neovim theme file
+    mkdir -p "$HOME/.cache/nvim"
+    echo "${NVIM_COLORSCHEME:-tokyonight}" > "$HOME/.cache/nvim/current-theme"
+    log "Generated: $HOME/.cache/nvim/current-theme"
 
     # Save current theme name
     echo "$THEME_NAME" > "$CURRENT_FILE"
@@ -439,6 +447,10 @@ EOF
 
     # Save current theme
     echo "matugen-generated" > "$CURRENT_FILE"
+
+    # Write Neovim theme fallback (matugen generates its own colors, use tokyonight as base)
+    mkdir -p "$HOME/.cache/nvim"
+    echo "tokyonight" > "$HOME/.cache/nvim/current-theme"
 
     # Note: matugen already reloads apps via its post_hooks in config.toml
     # No need to call reload_apps() here

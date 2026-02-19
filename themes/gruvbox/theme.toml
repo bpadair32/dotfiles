@@ -96,3 +96,6 @@ network = "#8ec07c"
 apps = "#83a598"
 idle = "#ebdbb2"
 notification = "#fabd2f"
+
+[neovim]
+colorscheme = "gruvbox"
