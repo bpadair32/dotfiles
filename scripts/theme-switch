@@ -338,14 +338,12 @@ apply_theme() {
     set_gtk_theme
     setup_gtk_css
 
-    # Update SDDM login screen
-    setup_sddm "$theme_dir"
-
-    # Set wallpaper
+    # Set wallpaper and reload apps before any blocking sudo calls
     set_wallpaper "$WALLPAPER" "$theme_dir"
-
-    # Reload applications
     reload_apps
+
+    # Update SDDM login screen last (requires sudo, may block for auth)
+    setup_sddm "$theme_dir"
 
     log "Theme '${THEME_NAME}' applied successfully!"
 }
