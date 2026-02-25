@@ -140,6 +140,46 @@ setup_gtk_css() {
     done
 }
 
+# Update SDDM login screen wallpaper and accent color
+setup_sddm() {
+    local theme_dir="$1"
+    local sddm_theme_dir="/usr/share/sddm/themes/01-breeze-fedora"
+    local sddm_conf="$sddm_theme_dir/theme.conf.user"
+
+    if [[ ! -d "$sddm_theme_dir" ]]; then
+        warn "SDDM theme directory not found, skipping"
+        return 0
+    fi
+
+    # Resolve wallpaper to an absolute path
+    local wallpaper_src=""
+    local wallpaper_val="${WALLPAPER:-}"
+    if [[ -n "$wallpaper_val" ]]; then
+        if [[ "$wallpaper_val" = /* ]] && [[ -f "$wallpaper_val" ]]; then
+            wallpaper_src="$wallpaper_val"
+        elif [[ -f "$theme_dir/$wallpaper_val" ]]; then
+            wallpaper_src="$theme_dir/$wallpaper_val"
+        fi
+    fi
+
+    # Copy wallpaper into SDDM theme dir (sddm user can't read $HOME)
+    local bg_file="default.png"
+    if [[ -n "$wallpaper_src" ]]; then
+        if sudo cp "$wallpaper_src" "$sddm_theme_dir/theme-wallpaper.png" 2>/dev/null; then
+            bg_file="theme-wallpaper.png"
+        else
+            warn "Failed to copy wallpaper to SDDM theme dir (sudo required)"
+        fi
+    fi
+
+    # Write theme.conf.user to set wallpaper and primary accent color
+    printf '[General]\nbackground=%s\ntype=image\ncolor=%s\n' \
+        "$bg_file" "${PRIMARY:-#1d99f3}" \
+        | sudo tee "$sddm_conf" >/dev/null 2>/dev/null \
+        && log "Updated SDDM theme: $bg_file" \
+        || warn "Failed to update SDDM theme.conf.user (sudo required)"
+}
+
 # Set GTK theme via gsettings and INI files
 set_gtk_theme() {
     local gtk_theme="${THEME_GTK_THEME:-Adwaita-dark}"
@@ -297,6 +337,9 @@ apply_theme() {
     # Set GTK theme and ensure gtk.css imports our colors
     set_gtk_theme
     setup_gtk_css
+
+    # Update SDDM login screen
+    setup_sddm "$theme_dir"
 
     # Set wallpaper
     set_wallpaper "$WALLPAPER" "$theme_dir"
