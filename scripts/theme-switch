@@ -29,6 +29,10 @@ ROFI_COLORS="$HOME/.config/rofi/colors.rasi"
 DUNST_COLORS="$HOME/.config/dunst/colors.conf"
 GTK3_CSS="$HOME/.config/gtk-3.0/colors.css"
 GTK4_CSS="$HOME/.config/gtk-4.0/colors.css"
+QT5CT_CONF="$HOME/.config/qt5ct/qt5ct.conf"
+QT5CT_COLORS="$HOME/.config/qt5ct/colors/theme.colors"
+QT6CT_CONF="$HOME/.config/qt6ct/qt6ct.conf"
+QT6CT_COLORS="$HOME/.config/qt6ct/colors/theme.colors"
 
 # Colors for output
 RED='\033[0;31m'
@@ -79,6 +83,14 @@ parse_theme_toml() {
                     local stripped="${value#\#}"
                     export "${key^^}_STRIPPED=$stripped"
                     EXPORTED_VARS="$EXPORTED_VARS \${${key^^}_STRIPPED}"
+                    # RGB decimal components for Qt color scheme format
+                    local r=$((16#${stripped:0:2}))
+                    local g=$((16#${stripped:2:2}))
+                    local b=$((16#${stripped:4:2}))
+                    export "${key^^}_R=$r"
+                    export "${key^^}_G=$g"
+                    export "${key^^}_B=$b"
+                    EXPORTED_VARS="$EXPORTED_VARS \${${key^^}_R} \${${key^^}_G} \${${key^^}_B}"
                     ;;
                 "colors.terminal")
                     export_key="${key^^}"
@@ -113,6 +125,19 @@ process_template() {
     else
         warn "Template not found: $template"
     fi
+}
+
+# Ensure GTK3 and GTK4 gtk.css files import our generated colors.css
+setup_gtk_css() {
+    for gtk_dir in "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"; do
+        local css_file="$gtk_dir/gtk.css"
+        mkdir -p "$gtk_dir"
+        if [[ -L "$css_file" ]] || ! grep -q "@import 'colors.css'" "$css_file" 2>/dev/null; then
+            [[ -L "$css_file" ]] && rm "$css_file"
+            echo "@import 'colors.css';" > "$css_file"
+            log "Set up: $css_file"
+        fi
+    done
 }
 
 # Set GTK theme via gsettings and INI files
@@ -241,7 +266,7 @@ apply_theme() {
     export WAYBAR_NOTIFICATION="${WAYBAR_NOTIFICATION:-$TERTIARY}"
 
     # Add extra variables to the substitution list
-    EXPORTED_VARS="$EXPORTED_VARS \${THEME_NAME} \${WALLPAPER}"
+    EXPORTED_VARS="$EXPORTED_VARS \${THEME_NAME} \${WALLPAPER} \${HOME}"
     EXPORTED_VARS="$EXPORTED_VARS \${FOREGROUND} \${TERMINAL_BACKGROUND} \${CURSOR} \${CURSOR_TEXT}"
     EXPORTED_VARS="$EXPORTED_VARS \${SELECTION_FG} \${SELECTION_BG} \${URL_COLOR}"
     EXPORTED_VARS="$EXPORTED_VARS \${WAYBAR_POWER} \${WAYBAR_NETWORK} \${WAYBAR_APPS} \${WAYBAR_IDLE} \${WAYBAR_NOTIFICATION}"
@@ -256,6 +281,10 @@ apply_theme() {
     process_template "$TEMPLATES_DIR/dunst-colors.conf.tmpl" "$DUNST_COLORS"
     process_template "$TEMPLATES_DIR/gtk-colors.css.tmpl" "$GTK3_CSS"
     process_template "$TEMPLATES_DIR/gtk-colors.css.tmpl" "$GTK4_CSS"
+    process_template "$TEMPLATES_DIR/qt-colors.colors.tmpl" "$QT5CT_COLORS"
+    process_template "$TEMPLATES_DIR/qt-colors.colors.tmpl" "$QT6CT_COLORS"
+    process_template "$TEMPLATES_DIR/qt5ct.conf.tmpl" "$QT5CT_CONF"
+    process_template "$TEMPLATES_DIR/qt6ct.conf.tmpl" "$QT6CT_CONF"
 
     # Generate Neovim theme file
     mkdir -p "$HOME/.cache/nvim"
@@ -265,8 +294,9 @@ apply_theme() {
     # Save current theme name
     echo "$THEME_NAME" > "$CURRENT_FILE"
 
-    # Set GTK theme
+    # Set GTK theme and ensure gtk.css imports our colors
     set_gtk_theme
+    setup_gtk_css
 
     # Set wallpaper
     set_wallpaper "$WALLPAPER" "$theme_dir"
