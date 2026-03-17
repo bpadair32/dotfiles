@@ -1,12 +1,24 @@
 @import 'colors.css';
 
-/* ─── Base ────────────────────────────────────────────────────────────────── */
+/*
+ * Do NOT use "all: unset" — GTK CSS has no max-width/max-height, so it
+ * prevents restoring image sizing constraints set by the system CSS.
+ * Instead, selectively override only what needs to change.
+ */
+
+/* ─── Font ────────────────────────────────────────────────────────────────── */
 
 * {
-  all: unset;
   font-family: "JetBrains Mono Nerd Font", "Noto Sans", monospace;
   font-size: 13px;
-  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+/* Override system CSS font-size variables */
+:root {
+  --font-size-body: 12px;
+  --font-size-summary: 13px;
+  --border-radius: 12px;
+  --notification-shadow: none;
 }
 
 .blank-window {
@@ -16,7 +28,8 @@
 /* ─── Control Center ──────────────────────────────────────────────────────── */
 
 .control-center {
-  background: alpha(@surface_container, 0.92);
+  background: alpha(@surface_container, 0.95);
+  color: @on_surface;
   border-radius: 18px;
   border: 1px solid alpha(@outline_variant, 0.5);
   box-shadow: 0 8px 32px alpha(@shadow, 0.45);
@@ -24,26 +37,50 @@
   padding: 10px;
 }
 
-/* ─── Title Widget ────────────────────────────────────────────────────────── */
-
-.widget-title {
-  margin: 2px 2px 6px 2px;
-  padding: 2px 6px;
+.control-center-list {
+  background: transparent;
 }
+
+/* ─── Empty State ─────────────────────────────────────────────────────────── */
+
+.control-center-list-placeholder {
+  color: @on_surface_variant;
+  opacity: 0.45;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+
+scrollbar trough {
+  background: transparent;
+}
+
+scrollbar slider {
+  background: alpha(@outline_variant, 0.4);
+  border-radius: 4px;
+  min-width: 4px;
+}
+
+scrollbar slider:hover {
+  background: alpha(@outline, 0.65);
+}
+
+/* ─── Title Widget ────────────────────────────────────────────────────────── */
 
 .widget-title > label {
   color: @on_surface;
-  font-size: 1em;
   font-weight: 700;
+  font-size: 13px;
   letter-spacing: 0.5px;
 }
 
 .widget-title > button {
   background: alpha(@primary_container, 0.5);
-  border-radius: 8px;
   color: @on_primary_container;
+  border-radius: 8px;
   padding: 4px 12px;
-  font-size: 0.82em;
+  border: none;
+  box-shadow: none;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -56,25 +93,15 @@
   color: @on_primary;
 }
 
-/* ─── Do Not Disturb Widget ───────────────────────────────────────────────── */
+/* ─── Do Not Disturb ──────────────────────────────────────────────────────── */
 
 .widget-dnd {
-  margin: 2px 4px 6px 4px;
   color: @on_surface;
-  font-size: 0.9em;
 }
 
 .widget-dnd > switch {
   background: @surface_container_high;
-  border-radius: 14px;
-  border: 1px solid alpha(@outline_variant, 0.6);
-  padding: 3px;
-  box-shadow: none;
-}
-
-.widget-dnd > switch:hover {
-  background: @surface_bright;
-  border-color: @outline;
+  border-color: alpha(@outline_variant, 0.6);
 }
 
 .widget-dnd > switch:checked {
@@ -84,9 +111,6 @@
 
 .widget-dnd > switch slider {
   background: @on_surface_variant;
-  border-radius: 12px;
-  min-width: 22px;
-  min-height: 22px;
 }
 
 .widget-dnd > switch:checked slider {
@@ -95,17 +119,11 @@
 
 /* ─── Notifications in Control Center ────────────────────────────────────── */
 
-.control-center .notification-row {
-  outline: none;
-  margin: 2px 0;
-}
-
 .control-center .notification-row .notification-background {
-  background: alpha(@surface_container_high, 0.65);
+  background: @surface_container_high;
   border-radius: 12px;
-  border: 1px solid alpha(@outline_variant, 0.25);
+  border: 1px solid alpha(@outline_variant, 0.35);
   margin: 2px 0;
-  padding: 2px;
 }
 
 .control-center .notification-row .notification-background:hover {
@@ -116,25 +134,17 @@
 .control-center .notification-row .notification-background .notification.critical {
   border: 1px solid alpha(@error, 0.55);
   background: alpha(@error_container, 0.18);
+}
+
+.control-center .notification-row .notification-background .notification .notification-default-action:hover {
+  background: alpha(@primary_container, 0.2);
   border-radius: 10px;
-}
-
-.control-center .notification-row .notification-background .notification .notification-content {
-  margin: 8px 10px;
-}
-
-.control-center .notification-row .notification-background .notification > *:last-child > * {
-  min-height: 3em;
 }
 
 .control-center .notification-row .notification-background .notification > *:last-child > * .notification-action {
   background: alpha(@secondary_container, 0.45);
   color: @on_secondary_container;
   border-radius: 8px;
-  margin: 4px;
-  padding: 4px 12px;
-  font-size: 0.8em;
-  font-weight: 600;
 }
 
 .control-center .notification-row .notification-background .notification > *:last-child > * .notification-action:hover {
@@ -148,20 +158,18 @@
 
 /* ─── Close Button ────────────────────────────────────────────────────────── */
 
-.control-center .notification-row .notification-background .close-button {
+.close-button {
+  color: @on_surface_variant;
   background: transparent;
   border-radius: 6px;
-  color: @on_surface_variant;
-  margin: 4px;
-  padding: 4px 6px;
 }
 
-.control-center .notification-row .notification-background .close-button:hover {
+.close-button:hover {
   background: alpha(@error, 0.15);
   color: @error;
 }
 
-.control-center .notification-row .notification-background .close-button:active {
+.close-button:active {
   background: alpha(@error, 0.3);
   color: @error;
 }
@@ -169,55 +177,49 @@
 /* ─── Notification Text ───────────────────────────────────────────────────── */
 
 .summary {
-  font-weight: 700;
-  font-size: 0.88rem;
   color: @on_surface;
+  font-weight: 700;
 }
 
 .body {
-  font-size: 0.8rem;
   color: @on_surface_variant;
-  margin-top: 2px;
+}
+
+.time {
+  color: @on_surface_variant;
+  font-size: 11px;
 }
 
 .image {
-  margin: 8px 12px 8px 8px;
+  border-radius: 8px;
+}
+
+/* Override system CSS background-color: white; body images with broken
+   sources show as large white/grey boxes without this. Setting height to 0
+   in config.json also disables them, but belt-and-suspenders. */
+.body-image {
+  background: transparent;
   border-radius: 8px;
 }
 
 /* ─── Progress Bars ───────────────────────────────────────────────────────── */
 
-progressbar,
-progress,
-trough {
+.notification.normal progressbar progress,
+.notification.low progressbar progress {
+  background: @primary;
   border-radius: 8px;
 }
 
-progressbar {
-  background: alpha(@surface_container_highest, 0.5);
-}
-
-.notification.critical progress {
+.notification.critical progressbar progress {
   background: @error;
-}
-
-.notification.normal progress,
-.notification.low progress {
-  background: @primary;
+  border-radius: 8px;
 }
 
 /* ─── Notification Groups ─────────────────────────────────────────────────── */
 
-.notification-group {
-  margin: 4px 2px;
-}
-
 .notification-group-headers {
-  font-weight: 700;
-  font-size: 0.78rem;
   color: @on_surface_variant;
   letter-spacing: 1.5px;
-  text-transform: uppercase;
 }
 
 .notification-group-icon {
@@ -226,11 +228,9 @@ progressbar {
 
 .notification-group-collapse-button,
 .notification-group-close-all-button {
-  background: transparent;
   color: @on_surface_variant;
-  margin: 2px;
+  background: transparent;
   border-radius: 6px;
-  padding: 4px 6px;
 }
 
 .notification-group-collapse-button:hover,
@@ -248,33 +248,25 @@ progressbar {
   margin: 4px 2px;
 }
 
-.widget-mpris-player {
-  background: transparent;
-  border-radius: 12px;
-  padding: 8px 12px;
-}
-
 .widget-mpris-album-art {
   border-radius: 10px;
 }
 
 .widget-mpris-title {
-  font-weight: 700;
-  font-size: 0.95rem;
   color: @on_surface;
+  font-weight: 700;
 }
 
 .widget-mpris-subtitle {
-  font-size: 0.78rem;
   color: @on_surface_variant;
-  margin-top: 2px;
 }
 
 .widget-mpris button {
-  color: alpha(@on_surface, 0.55);
-  border-radius: 50%;
-  padding: 6px;
+  color: @on_surface_variant;
   background: transparent;
+  border-radius: 50%;
+  border: none;
+  box-shadow: none;
 }
 
 .widget-mpris button:hover {
@@ -282,72 +274,26 @@ progressbar {
   color: @on_surface;
 }
 
-.widget-mpris > box > button {
-  color: @on_surface;
-  border-radius: 50%;
-}
-
 /* ─── Floating Notifications ──────────────────────────────────────────────── */
 
 .floating-notifications.background .notification-row .notification-background {
-  background: alpha(@surface_container, 0.90);
-  box-shadow: 0 4px 20px alpha(@shadow, 0.5);
+  background: alpha(@surface_container, 0.92);
   border-radius: 14px;
   border: 1px solid alpha(@outline_variant, 0.4);
+  box-shadow: 0 4px 20px alpha(@shadow, 0.5);
   margin: 10px;
-  padding: 2px;
-}
-
-.floating-notifications.background .notification-row .notification-background .notification {
-  padding: 4px;
-  border-radius: 12px;
 }
 
 .floating-notifications.background .notification-row .notification-background .notification.critical {
   border: 1px solid @error;
 }
 
-.floating-notifications.background .notification-row .notification-background .notification .notification-content {
-  margin: 12px 14px;
-}
-
-.floating-notifications.background .notification-row .notification-background .notification > *:last-child > * {
-  min-height: 3em;
-}
-
 .floating-notifications.background .notification-row .notification-background .notification > *:last-child > * .notification-action {
-  border-radius: 8px;
   background: alpha(@secondary_container, 0.55);
   color: @on_secondary_container;
-  margin: 4px;
-  padding: 4px 12px;
-  font-size: 0.8em;
-  font-weight: 600;
+  border-radius: 8px;
 }
 
 .floating-notifications.background .notification-row .notification-background .notification > *:last-child > * .notification-action:hover {
   background: @secondary_container;
-}
-
-.floating-notifications.background .notification-row .notification-background .notification > *:last-child > * .notification-action:active {
-  background: @secondary;
-  color: @on_secondary;
-}
-
-.floating-notifications.background .notification-row .notification-background .close-button {
-  margin: 6px;
-  padding: 4px 6px;
-  border-radius: 6px;
-  background: transparent;
-  color: @on_surface_variant;
-}
-
-.floating-notifications.background .notification-row .notification-background .close-button:hover {
-  background: alpha(@error, 0.15);
-  color: @error;
-}
-
-.floating-notifications.background .notification-row .notification-background .close-button:active {
-  background: alpha(@error, 0.3);
-  color: @error;
 }

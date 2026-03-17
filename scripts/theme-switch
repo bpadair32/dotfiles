@@ -29,6 +29,10 @@ ROFI_COLORS="$HOME/.config/rofi/colors.rasi"
 DUNST_COLORS="$HOME/.config/dunst/colors.conf"
 GTK3_CSS="$HOME/.config/gtk-3.0/colors.css"
 GTK4_CSS="$HOME/.config/gtk-4.0/colors.css"
+QT5CT_CONF="$HOME/.config/qt5ct/qt5ct.conf"
+QT5CT_COLORS="$HOME/.config/qt5ct/colors/theme.colors"
+QT6CT_CONF="$HOME/.config/qt6ct/qt6ct.conf"
+QT6CT_COLORS="$HOME/.config/qt6ct/colors/theme.colors"
 
 # Colors for output
 RED='\033[0;31m'
@@ -79,12 +83,23 @@ parse_theme_toml() {
                     local stripped="${value#\#}"
                     export "${key^^}_STRIPPED=$stripped"
                     EXPORTED_VARS="$EXPORTED_VARS \${${key^^}_STRIPPED}"
+                    # RGB decimal components for Qt color scheme format
+                    local r=$((16#${stripped:0:2}))
+                    local g=$((16#${stripped:2:2}))
+                    local b=$((16#${stripped:4:2}))
+                    export "${key^^}_R=$r"
+                    export "${key^^}_G=$g"
+                    export "${key^^}_B=$b"
+                    EXPORTED_VARS="$EXPORTED_VARS \${${key^^}_R} \${${key^^}_G} \${${key^^}_B}"
                     ;;
                 "colors.terminal")
                     export_key="${key^^}"
                     ;;
                 "colors.waybar")
                     export_key="WAYBAR_${key^^}"
+                    ;;
+                "neovim")
+                    export_key="NVIM_${key^^}"
                     ;;
                 *)
                     continue
@@ -110,6 +125,59 @@ process_template() {
     else
         warn "Template not found: $template"
     fi
+}
+
+# Ensure GTK3 and GTK4 gtk.css files import our generated colors.css
+setup_gtk_css() {
+    for gtk_dir in "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"; do
+        local css_file="$gtk_dir/gtk.css"
+        mkdir -p "$gtk_dir"
+        if [[ -L "$css_file" ]] || ! grep -q "@import 'colors.css'" "$css_file" 2>/dev/null; then
+            [[ -L "$css_file" ]] && rm "$css_file"
+            echo "@import 'colors.css';" > "$css_file"
+            log "Set up: $css_file"
+        fi
+    done
+}
+
+# Update SDDM login screen wallpaper and accent color
+setup_sddm() {
+    local theme_dir="$1"
+    local sddm_theme_dir="/usr/share/sddm/themes/01-breeze-fedora"
+    local sddm_conf="$sddm_theme_dir/theme.conf.user"
+
+    if [[ ! -d "$sddm_theme_dir" ]]; then
+        warn "SDDM theme directory not found, skipping"
+        return 0
+    fi
+
+    # Resolve wallpaper to an absolute path
+    local wallpaper_src=""
+    local wallpaper_val="${WALLPAPER:-}"
+    if [[ -n "$wallpaper_val" ]]; then
+        if [[ "$wallpaper_val" = /* ]] && [[ -f "$wallpaper_val" ]]; then
+            wallpaper_src="$wallpaper_val"
+        elif [[ -f "$theme_dir/$wallpaper_val" ]]; then
+            wallpaper_src="$theme_dir/$wallpaper_val"
+        fi
+    fi
+
+    # Copy wallpaper into SDDM theme dir (sddm user can't read $HOME)
+    local bg_file="default.png"
+    if [[ -n "$wallpaper_src" ]]; then
+        if sudo cp "$wallpaper_src" "$sddm_theme_dir/theme-wallpaper.png" 2>/dev/null; then
+            bg_file="theme-wallpaper.png"
+        else
+            warn "Failed to copy wallpaper to SDDM theme dir (sudo required)"
+        fi
+    fi
+
+    # Write theme.conf.user to set wallpaper and primary accent color
+    printf '[General]\nbackground=%s\ntype=image\ncolor=%s\n' \
+        "$bg_file" "${PRIMARY:-#1d99f3}" \
+        | sudo tee "$sddm_conf" >/dev/null 2>/dev/null \
+        && log "Updated SDDM theme: $bg_file" \
+        || warn "Failed to update SDDM theme.conf.user (sudo required)"
 }
 
 # Set GTK theme via gsettings and INI files
@@ -238,7 +306,7 @@ apply_theme() {
     export WAYBAR_NOTIFICATION="${WAYBAR_NOTIFICATION:-$TERTIARY}"
 
     # Add extra variables to the substitution list
-    EXPORTED_VARS="$EXPORTED_VARS \${THEME_NAME} \${WALLPAPER}"
+    EXPORTED_VARS="$EXPORTED_VARS \${THEME_NAME} \${WALLPAPER} \${HOME}"
     EXPORTED_VARS="$EXPORTED_VARS \${FOREGROUND} \${TERMINAL_BACKGROUND} \${CURSOR} \${CURSOR_TEXT}"
     EXPORTED_VARS="$EXPORTED_VARS \${SELECTION_FG} \${SELECTION_BG} \${URL_COLOR}"
     EXPORTED_VARS="$EXPORTED_VARS \${WAYBAR_POWER} \${WAYBAR_NETWORK} \${WAYBAR_APPS} \${WAYBAR_IDLE} \${WAYBAR_NOTIFICATION}"
@@ -253,18 +321,29 @@ apply_theme() {
     process_template "$TEMPLATES_DIR/dunst-colors.conf.tmpl" "$DUNST_COLORS"
     process_template "$TEMPLATES_DIR/gtk-colors.css.tmpl" "$GTK3_CSS"
     process_template "$TEMPLATES_DIR/gtk-colors.css.tmpl" "$GTK4_CSS"
+    process_template "$TEMPLATES_DIR/qt-colors.colors.tmpl" "$QT5CT_COLORS"
+    process_template "$TEMPLATES_DIR/qt-colors.colors.tmpl" "$QT6CT_COLORS"
+    process_template "$TEMPLATES_DIR/qt5ct.conf.tmpl" "$QT5CT_CONF"
+    process_template "$TEMPLATES_DIR/qt6ct.conf.tmpl" "$QT6CT_CONF"
+
+    # Generate Neovim theme file
+    mkdir -p "$HOME/.cache/nvim"
+    echo "${NVIM_COLORSCHEME:-tokyonight}" > "$HOME/.cache/nvim/current-theme"
+    log "Generated: $HOME/.cache/nvim/current-theme"
 
     # Save current theme name
     echo "$THEME_NAME" > "$CURRENT_FILE"
 
-    # Set GTK theme
+    # Set GTK theme and ensure gtk.css imports our colors
     set_gtk_theme
+    setup_gtk_css
 
-    # Set wallpaper
+    # Set wallpaper and reload apps before any blocking sudo calls
     set_wallpaper "$WALLPAPER" "$theme_dir"
-
-    # Reload applications
     reload_apps
+
+    # Update SDDM login screen last (requires sudo, may block for auth)
+    setup_sddm "$theme_dir"
 
     log "Theme '${THEME_NAME}' applied successfully!"
 }
@@ -439,6 +518,10 @@ EOF
 
     # Save current theme
     echo "matugen-generated" > "$CURRENT_FILE"
+
+    # Write Neovim theme fallback (matugen generates its own colors, use tokyonight as base)
+    mkdir -p "$HOME/.cache/nvim"
+    echo "tokyonight" > "$HOME/.cache/nvim/current-theme"
 
     # Note: matugen already reloads apps via its post_hooks in config.toml
     # No need to call reload_apps() here

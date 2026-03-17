@@ -31,7 +31,7 @@ if [[ -z "$ACCESS_TOKEN" ]]; then
 fi
 
 # Fetch usage data
-USAGE=$(curl -sf "https://api.anthropic.com/api/oauth/usage" \
+USAGE=$(curl -s "https://api.anthropic.com/api/oauth/usage" \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "User-Agent: claude-code/2.0.32" \
     -H "anthropic-beta: oauth-2025-04-20" \
@@ -39,6 +39,13 @@ USAGE=$(curl -sf "https://api.anthropic.com/api/oauth/usage" \
 
 if [[ -z "$USAGE" ]] || [[ "$USAGE" == "null" ]]; then
     echo '{"text": "󰚩 --", "tooltip": "Claude: API error", "class": "error"}'
+    exit 0
+fi
+
+# Check for API error response
+if echo "$USAGE" | jq -e '.error' &>/dev/null; then
+    err_msg=$(echo "$USAGE" | jq -r '.error.message // "API error"')
+    echo "{\"text\": \"󰚩 --\", \"tooltip\": \"Claude: ${err_msg}\", \"class\": \"error\"}"
     exit 0
 fi
 
