@@ -1,0 +1,10 @@
+# Allow theme-switch to update the SDDM login screen without a password prompt.
+# theme-switch is invoked via Hyprland keybinds and rofi (no TTY), so interactive
+# sudo authentication is not possible.
+#
+# Both targets are non-security-critical display files:
+#   - theme-wallpaper.png: login screen background
+#   - theme.conf.user:     theme config (wallpaper path + accent color)
+
+bpadair ALL=(ALL) NOPASSWD: /usr/bin/cp * /usr/share/sddm/themes/01-breeze-fedora/theme-wallpaper.png
+bpadair ALL=(ALL) NOPASSWD: /usr/bin/tee /usr/share/sddm/themes/01-breeze-fedora/theme.conf.user

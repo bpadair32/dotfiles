@@ -11,6 +11,7 @@ post_install() {
 
     set_default_shell
     enable_services
+    install_sudoers
     create_monitors_template
     apply_default_theme
 
@@ -74,6 +75,37 @@ enable_services() {
     done
 
     log_success "  Services configured"
+}
+
+install_sudoers() {
+    log_step "Installing sudoers drop-ins..."
+
+    local sudoers_src="${DOTFILES_DIR}/sudoers"
+    local sudoers_dst="/etc/sudoers.d"
+
+    if [[ ! -d "$sudoers_src" ]]; then
+        log_info "  No sudoers drop-ins found, skipping"
+        return 0
+    fi
+
+    for src_file in "$sudoers_src"/*; do
+        [[ -f "$src_file" ]] || continue
+        local name
+        name=$(basename "$src_file")
+        local dst_file="$sudoers_dst/$name"
+
+        # Validate syntax before installing
+        if ! sudo visudo -cf "$src_file" &>/dev/null; then
+            log_warn "  $name: syntax error, skipping"
+            continue
+        fi
+
+        if sudo cp "$src_file" "$dst_file" && sudo chmod 440 "$dst_file"; then
+            log_success "  Installed: $dst_file"
+        else
+            log_warn "  Failed to install: $dst_file"
+        fi
+    done
 }
 
 create_monitors_template() {

@@ -96,3 +96,6 @@ network = "#7fbbb3"
 apps = "#7fbbb3"
 idle = "#d3c6aa"
 notification = "#dbbc7f"
+
+[neovim]
+colorscheme = "everforest"

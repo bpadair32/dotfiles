@@ -1,4 +1,7 @@
 # Theming packages
 papirus-icon-theme
+papirus-icon-theme-dark
 adwaita-icon-theme
 breeze-icon-theme
+qt5ct
+qt6ct
