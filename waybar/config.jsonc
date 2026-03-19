@@ -223,7 +223,7 @@
   "custom/claude": {
     "format": "{}",
     "return-type": "json",
-    "interval": 60,
+    "interval": 300,
     "exec": "~/repos/dotfiles/scripts/claude-usage",
     "on-click": "kitty --class floating -e bash -c 'cat ~/.claude/stats-cache.json | jq . | less'",
     "tooltip": true

@@ -168,8 +168,9 @@ main() {
     fi
 
     # Parse current conditions
+    # wttr.in wraps response in a "data" key; fall back for older format
     local current
-    current=$(echo "$weather" | jq -r '.current_condition[0]')
+    current=$(echo "$weather" | jq -r 'if .data then .data.current_condition[0] else .current_condition[0] end')
 
     local temp humidity feels_like weather_code weather_desc
     if [[ "$UNITS" == "C" ]]; then
