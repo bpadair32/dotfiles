@@ -13,9 +13,10 @@
 
 window#waybar {
     background-color: @background;
-    border-radius: 5px;
-    border-bottom: 2px solid @outline;
+    border-radius: 12px;
+    border: 1px solid @outline_variant;
     color: @on_surface;
+    margin: 6px 10px;
 }
 
 tooltip {
@@ -69,39 +70,46 @@ tooltip label {
 
 
 #battery {
-    padding-right: 5px;
-    padding-left: 5px;
-    border-bottom: 2px solid @outline;
-}
-
-#custom-power {
-  color: @waybar_power;
-  padding-right: 5px;
-  padding-left: 5px;
-}
-
-
-#clock {
-    background-color: @background;
-    color: @secondary;
-    border-bottom: 2px solid @outline;
-    padding-right: 10px;
-    padding-left: 10px;
-}
-
-#battery {
-    background-color: @background;
+    background: @surface_container;
+    border-radius: 8px;
+    margin: 4px 2px;
+    padding: 0 10px;
     color: @on_surface;
 }
 
 #battery.charging {
-    color: @on_surface;
-    background-color: @background;
+    color: @tertiary;
+}
+
+#battery.warning {
+    color: @tertiary;
+}
+
+#battery.critical {
+    color: @error;
+}
+
+#clock {
+    background: @surface_container_high;
+    border-radius: 8px;
+    margin: 4px 6px;
+    padding: 0 12px;
+    color: @secondary;
+}
+
+#custom-power {
+    background: @surface_container;
+    border-radius: 8px;
+    margin: 4px 2px 4px 6px;
+    padding: 0 10px;
+    color: @waybar_power;
 }
 
 #pulseaudio {
-  padding-right: 10px;
-  padding-left: 10px;
+    background: @surface_container;
+    border-radius: 8px;
+    margin: 4px 2px;
+    padding: 0 10px;
 }
 
 #custom-media {
@@ -121,9 +129,11 @@ tooltip label {
 }
 
 #network {
-  padding-right: 10px;
-  padding-left: 10px;
-  color: @waybar_network;
+    background: @surface_container;
+    border-radius: 8px;
+    margin: 4px 2px;
+    padding: 0 10px;
+    color: @waybar_network;
 }
 
 #custom-apps {
@@ -140,21 +150,28 @@ tooltip label {
 }
 
 #idle_inhibitor {
-  padding-right: 15px;
-  font-size: 1.1em;
-  color: @waybar_idle;
+    background: @surface_container;
+    border-radius: 8px;
+    margin: 4px 2px;
+    padding: 0 10px;
+    font-size: 1.1em;
+    color: @waybar_idle;
 }
 
 #custom-notification {
-  padding-right: 10px;
-  padding-left: 10px;
-  color: @waybar_notification;
+    background: @surface_container;
+    border-radius: 8px;
+    margin: 4px 2px;
+    padding: 0 10px;
+    color: @waybar_notification;
 }
 
 #custom-weather {
-  padding-right: 10px;
-  padding-left: 10px;
-  color: @secondary;
+    background: @surface_container;
+    border-radius: 8px;
+    margin: 4px 2px 4px 8px;
+    padding: 0 10px;
+    color: @secondary;
 }
 
 #custom-weather.warning {
@@ -170,9 +187,11 @@ tooltip label {
 }
 
 #custom-claude {
-  padding-right: 10px;
-  padding-left: 10px;
-  color: @tertiary;
+    background: @surface_container;
+    border-radius: 8px;
+    margin: 4px 8px 4px 2px;
+    padding: 0 10px;
+    color: @tertiary;
 }
 
 #custom-claude.critical {
@@ -197,9 +216,11 @@ tooltip label {
 }
 
 #custom-updates {
-  padding-right: 10px;
-  padding-left: 5px;
-  color: @on_surface;
+    background: @surface_container;
+    border-radius: 8px;
+    margin: 4px 2px;
+    padding: 0 10px;
+    color: @on_surface;
 }
 
 #custom-updates.warning {
