@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "mcp__plugin_context7_context7__resolve-library-id",
-      "mcp__plugin_context7_context7__query-docs"
+      "mcp__plugin_context7_context7__query-docs",
+      "Read(//home/bpadair/**)",
+      "Bash(bash repos/dotfiles/scripts/tasks)",
+      "Bash(grep -r --include=*.md -P '^[\\\\t ]*- \\\\[ \\\\] #task.*📅 \\\\d{4}-\\\\d{2}-\\\\d{2}' /home/bpadair/Documents/Notes)",
+      "Bash(grep -r --include=*.md 📅 /home/bpadair/Documents/Notes)",
+      "Bash(grep -r --include=*.md '\\\\- \\\\[ \\\\]' /home/bpadair/Documents/Notes)",
+      "Bash(grep -r --include=*.md '\\\\- \\\\[ \\\\]' /home/bpadair/Documents/Notes/)"
     ]
   }
 }

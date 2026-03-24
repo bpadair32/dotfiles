@@ -12,7 +12,7 @@ VAULT_DIR="$HOME/Documents/Notes"
 TODAY=$(date +%Y-%m-%d)
 
 # Find all incomplete tasks with #task tag and any due date
-mapfile -t all_tasks < <(grep -r --include='*.md' -P "^[\t ]*- \[ \] #task.*📅 \d{4}-\d{2}-\d{2}" "$VAULT_DIR" 2>/dev/null || true)
+mapfile -t all_tasks < <(grep -r --include='*.md' -P "^[\t ]*- \[ \] (?=.*#task)(?=.*📅 \d{4}-\d{2}-\d{2}).*" "$VAULT_DIR" 2>/dev/null || true)
 
 if [[ ${#all_tasks[@]} -eq 0 ]]; then
     echo '{"text": "", "tooltip": "", "class": "empty"}'
