@@ -27,6 +27,10 @@ declare -A SYMLINK_MAP=(
     ["neofetch"]="${HOME}/.config/neofetch"
     ["matugen"]="${HOME}/.config/matugen"
 
+    # XDG portal config
+    ["xdg-desktop-portal"]="${HOME}/.config/xdg-desktop-portal"
+    ["xdg-desktop-portal-termfilechooser"]="${HOME}/.config/xdg-desktop-portal-termfilechooser"
+
     # Other directories
     ["tmux"]="${HOME}/.tmux"
     ["scripts"]="${HOME}/.local/scripts"
