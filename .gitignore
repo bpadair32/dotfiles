@@ -1,3 +1,9 @@
 hypr/configs/monitors.conf
 tmux/plugins/*
 themes/_dynamic/
+
+# Generated runtime state
+.current-theme
+
+# Tool artifacts
+.playwright-mcp/
