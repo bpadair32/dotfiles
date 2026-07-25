@@ -21,6 +21,7 @@ CURRENT_FILE="$DOTFILES_DIR/.current-theme"
 
 # Target config locations
 HYPR_COLORS="$HOME/.config/hypr/colors.conf"
+HYPR_COLORS_LUA="$HOME/.config/hypr/colors.lua"
 WAYBAR_COLORS="$HOME/.config/waybar/colors.css"
 WLOGOUT_COLORS="$HOME/.config/wlogout/colors.css"
 SWAYNC_COLORS="$HOME/.config/swaync/colors.css"
@@ -313,6 +314,7 @@ apply_theme() {
 
     # Generate all config files from templates
     process_template "$TEMPLATES_DIR/hyprland-colors.conf.tmpl" "$HYPR_COLORS"
+    process_template "$TEMPLATES_DIR/hyprland-colors.lua.tmpl" "$HYPR_COLORS_LUA"
     process_template "$TEMPLATES_DIR/waybar-colors.css.tmpl" "$WAYBAR_COLORS"
     process_template "$TEMPLATES_DIR/waybar-colors.css.tmpl" "$WLOGOUT_COLORS"
     process_template "$TEMPLATES_DIR/swaync-colors.css.tmpl" "$SWAYNC_COLORS"

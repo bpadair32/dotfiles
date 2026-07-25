@@ -1,4 +1,5 @@
 hypr/configs/monitors.conf
+hypr/configs/monitors.lua
 tmux/plugins/*
 themes/_dynamic/
 
