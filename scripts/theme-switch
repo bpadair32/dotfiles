@@ -56,6 +56,34 @@ blend_hex() {
     printf '#%02x%02x%02x' "$r" "$g" "$b"
 }
 
+# WCAG contrast ratio between two hex colors. Needs floats, so awk does the work.
+contrast_ratio() {
+    local a="${1#\#}" b="${2#\#}"
+    awk -v ar=$((16#${a:0:2})) -v ag=$((16#${a:2:2})) -v ab=$((16#${a:4:2})) \
+        -v br=$((16#${b:0:2})) -v bg=$((16#${b:2:2})) -v bb=$((16#${b:4:2})) '
+        function chan(v) { v = v / 255; return (v <= 0.03928) ? v / 12.92 : ((v + 0.055) / 1.055) ^ 2.4 }
+        function lum(r, g, b) { return 0.2126 * chan(r) + 0.7152 * chan(g) + 0.0722 * chan(b) }
+        BEGIN {
+            la = lum(ar, ag, ab); lb = lum(br, bg, bb)
+            hi = (la > lb ? la : lb); lo = (la > lb ? lb : la)
+            printf "%.4f", (hi + 0.05) / (lo + 0.05)
+        }'
+}
+
+# Mix a color toward a target until it clears a contrast ratio against a surface.
+# ensure_contrast <color> <surface> <target> <min-ratio>
+ensure_contrast() {
+    local color="$1" surface="$2" target="$3" min="$4" pct candidate
+    for pct in 0 10 20 30 40 50 60 70 80 90 100; do
+        candidate=$(blend_hex "$color" "$target" "$pct")
+        if awk -v r="$(contrast_ratio "$candidate" "$surface")" -v m="$min" 'BEGIN { exit !(r >= m) }'; then
+            printf '%s' "$candidate"
+            return
+        fi
+    done
+    printf '%s' "$target"
+}
+
 # Track exported variables for envsubst
 EXPORTED_VARS=""
 
@@ -406,6 +434,26 @@ generate_pywal_theme() {
     s_bright=$(blend_hex "$background" "$foreground" 20)
     s_variant=$(blend_hex "$background" "$foreground" 10)
 
+    # pywal takes its accents straight from the wallpaper, so nothing guarantees
+    # they are readable against it. Mix each toward the foreground until it
+    # clears AA on the lightest surface, so the result holds for any wallpaper.
+    local acc_pri acc_sec acc_ter acc_err dim_pri dim_sec dim_ter
+    acc_pri=$(ensure_contrast "$color4" "$s_bright" "$foreground" 4.5)
+    acc_sec=$(ensure_contrast "$color5" "$s_bright" "$foreground" 4.5)
+    acc_ter=$(ensure_contrast "$color6" "$s_bright" "$foreground" 4.5)
+    acc_err=$(ensure_contrast "$color1" "$s_bright" "$foreground" 4.5)
+    dim_pri=$(ensure_contrast "$color12" "$s_bright" "$foreground" 4.5)
+    dim_sec=$(ensure_contrast "$color13" "$s_bright" "$foreground" 4.5)
+    dim_ter=$(ensure_contrast "$color14" "$s_bright" "$foreground" 4.5)
+
+    # Containers are backgrounds carrying light on_*_container text, so they
+    # move the other way: toward the background until that text is readable.
+    local con_pri con_sec con_ter con_err
+    con_pri=$(ensure_contrast "$color4" "$foreground" "$background" 4.5)
+    con_sec=$(ensure_contrast "$color5" "$foreground" "$background" 4.5)
+    con_ter=$(ensure_contrast "$color6" "$foreground" "$background" 4.5)
+    con_err=$(ensure_contrast "$color9" "$foreground" "$background" 4.5)
+
     # Generate theme.toml from pywal colors
     cat > "$theme_file" << EOF
 [meta]
@@ -429,20 +477,20 @@ surface_container_highest = "$sc_highest"
 surface_container_lowest = "$background"
 surface_bright = "$s_bright"
 surface_dim = "$background"
-surface_tint = "$color4"
+surface_tint = "$acc_pri"
 surface_variant = "$s_variant"
-primary = "$color4"
-primary_container = "$color4"
-primary_fixed = "$color4"
-primary_fixed_dim = "$color12"
-secondary = "$color5"
-secondary_container = "$color5"
-secondary_fixed = "$color5"
-secondary_fixed_dim = "$color13"
-tertiary = "$color6"
-tertiary_container = "$color6"
-tertiary_fixed = "$color6"
-tertiary_fixed_dim = "$color14"
+primary = "$acc_pri"
+primary_container = "$con_pri"
+primary_fixed = "$acc_pri"
+primary_fixed_dim = "$dim_pri"
+secondary = "$acc_sec"
+secondary_container = "$con_sec"
+secondary_fixed = "$acc_sec"
+secondary_fixed_dim = "$dim_sec"
+tertiary = "$acc_ter"
+tertiary_container = "$con_ter"
+tertiary_fixed = "$acc_ter"
+tertiary_fixed_dim = "$dim_ter"
 on_surface = "$foreground"
 on_background = "$foreground"
 on_primary = "$background"
@@ -460,13 +508,13 @@ on_tertiary_fixed_variant = "$color0"
 on_surface_variant = "$color15"
 outline = "$color8"
 outline_variant = "$color0"
-error = "$color1"
-error_container = "$color9"
+error = "$acc_err"
+error_container = "$con_err"
 on_error = "$foreground"
 on_error_container = "$foreground"
 inverse_surface = "$foreground"
 inverse_on_surface = "$background"
-inverse_primary = "$color12"
+inverse_primary = "$dim_pri"
 scrim = "#000000"
 shadow = "#000000"
 source_color = "$color4"
