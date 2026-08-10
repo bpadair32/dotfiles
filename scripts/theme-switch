@@ -46,6 +46,16 @@ log() { echo -e "${GREEN}[theme-switch]${NC} $*"; }
 warn() { echo -e "${YELLOW}[theme-switch]${NC} $*"; }
 error() { echo -e "${RED}[theme-switch]${NC} ERROR: $*" >&2; exit 1; }
 
+# Mix two hex colors: blend_hex <base> <target> <percent-toward-target>
+blend_hex() {
+    local base="${1#\#}" target="${2#\#}" pct="$3"
+    local r g b
+    r=$(( (16#${base:0:2} * (100 - pct) + 16#${target:0:2} * pct) / 100 ))
+    g=$(( (16#${base:2:2} * (100 - pct) + 16#${target:2:2} * pct) / 100 ))
+    b=$(( (16#${base:4:2} * (100 - pct) + 16#${target:4:2} * pct) / 100 ))
+    printf '#%02x%02x%02x' "$r" "$g" "$b"
+}
+
 # Track exported variables for envsubst
 EXPORTED_VARS=""
 
@@ -384,6 +394,18 @@ generate_pywal_theme() {
     source "$HOME/.cache/wal/colors.sh"
     set -u
 
+    # Derive the surface elevation ladder by mixing background toward foreground.
+    # pywal's color7/color8 are mid-greys, so using them as container surfaces
+    # produced jarring light slabs (the waybar clock fell to 2.4:1 contrast).
+    # Small steps match how the static themes define these tokens.
+    local sc_low sc sc_high sc_highest s_bright s_variant
+    sc_low=$(blend_hex "$background" "$foreground" 2)
+    sc=$(blend_hex "$background" "$foreground" 5)
+    sc_high=$(blend_hex "$background" "$foreground" 10)
+    sc_highest=$(blend_hex "$background" "$foreground" 15)
+    s_bright=$(blend_hex "$background" "$foreground" 20)
+    s_variant=$(blend_hex "$background" "$foreground" 10)
+
     # Generate theme.toml from pywal colors
     cat > "$theme_file" << EOF
 [meta]
@@ -400,15 +422,15 @@ cursor_theme = "default"
 # Pywal colors mapped to Material Design 3 tokens
 background = "$background"
 surface = "$background"
-surface_container = "$color0"
-surface_container_low = "$background"
-surface_container_high = "$color8"
-surface_container_highest = "$color7"
+surface_container = "$sc"
+surface_container_low = "$sc_low"
+surface_container_high = "$sc_high"
+surface_container_highest = "$sc_highest"
 surface_container_lowest = "$background"
-surface_bright = "$color7"
+surface_bright = "$s_bright"
 surface_dim = "$background"
 surface_tint = "$color4"
-surface_variant = "$color8"
+surface_variant = "$s_variant"
 primary = "$color4"
 primary_container = "$color4"
 primary_fixed = "$color4"
