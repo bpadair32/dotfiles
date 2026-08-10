@@ -3,7 +3,7 @@
 
 * {
     background:     #0a0f18;
-    background-alt: #0a0f18;
+    background-alt: #131820;
     foreground:     #c1c3c5;
     selected:       #176593;
     active:         #51748E;
