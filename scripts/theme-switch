@@ -70,18 +70,59 @@ contrast_ratio() {
         }'
 }
 
-# Mix a color toward a target until it clears a contrast ratio against a surface.
-# ensure_contrast <color> <surface> <target> <min-ratio>
+# Shift a color's lightness until it clears a contrast ratio against a surface,
+# holding hue and saturation so the result stays as colorful as it started.
+# Mixing toward the foreground would work too, but that colour is nearly grey,
+# so it washes accents out.
+# ensure_contrast <color> <surface> <up|down> <min-ratio>
 ensure_contrast() {
-    local color="$1" surface="$2" target="$3" min="$4" pct candidate
-    for pct in 0 10 20 30 40 50 60 70 80 90 100; do
-        candidate=$(blend_hex "$color" "$target" "$pct")
-        if awk -v r="$(contrast_ratio "$candidate" "$surface")" -v m="$min" 'BEGIN { exit !(r >= m) }'; then
-            printf '%s' "$candidate"
-            return
-        fi
-    done
-    printf '%s' "$target"
+    local color="${1#\#}" surface="${2#\#}" dir="$3" min="$4"
+    awk -v cr="$((16#${color:0:2}))" -v cg="$((16#${color:2:2}))" -v cb="$((16#${color:4:2}))" \
+        -v sr="$((16#${surface:0:2}))" -v sg="$((16#${surface:2:2}))" -v sb="$((16#${surface:4:2}))" \
+        -v dir="$dir" -v min="$min" '
+        function chan(v) { v = v / 255; return (v <= 0.03928) ? v / 12.92 : ((v + 0.055) / 1.055) ^ 2.4 }
+        function lum(r, g, b) { return 0.2126 * chan(r) + 0.7152 * chan(g) + 0.0722 * chan(b) }
+        function ratio(r, g, b, sl,   cl, hi, lo) {
+            cl = lum(r, g, b)
+            hi = (cl > sl ? cl : sl); lo = (cl > sl ? sl : cl)
+            return (hi + 0.05) / (lo + 0.05)
+        }
+        function hue2rgb(p, q, t) {
+            if (t < 0) t += 1; if (t > 1) t -= 1
+            if (t < 1/6) return p + (q - p) * 6 * t
+            if (t < 1/2) return q
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6
+            return p
+        }
+        BEGIN {
+            r = cr / 255; g = cg / 255; b = cb / 255
+            max = (r > g ? (r > b ? r : b) : (g > b ? g : b))
+            min_c = (r < g ? (r < b ? r : b) : (g < b ? g : b))
+            l = (max + min_c) / 2; d = max - min_c
+            if (d == 0) { h = 0; s = 0 }
+            else {
+                s = (l > 0.5) ? d / (2 - max - min_c) : d / (max + min_c)
+                if (max == r)      h = ((g - b) / d + (g < b ? 6 : 0)) / 6
+                else if (max == g) h = ((b - r) / d + 2) / 6
+                else               h = ((r - g) / d + 4) / 6
+            }
+            sl = lum(sr, sg, sb)
+            step = (dir == "up") ? 0.01 : -0.01
+            for (i = 0; i <= 100; i++) {
+                nl = l + step * i
+                if (nl > 1) nl = 1; if (nl < 0) nl = 0
+                q = (nl < 0.5) ? nl * (1 + s) : nl + s - nl * s
+                p = 2 * nl - q
+                # Round here, not at print time, so the ratio is measured on the
+                # colour actually emitted rather than a fractionally different one.
+                nr = int(hue2rgb(p, q, h + 1/3) * 255 + 0.5)
+                ng = int(hue2rgb(p, q, h) * 255 + 0.5)
+                nb = int(hue2rgb(p, q, h - 1/3) * 255 + 0.5)
+                if (ratio(nr, ng, nb, sl) >= min) break
+                if (nl == 1 || nl == 0) break
+            }
+            printf "#%02x%02x%02x", nr, ng, nb
+        }'
 }
 
 # Track exported variables for envsubst
@@ -436,23 +477,25 @@ generate_pywal_theme() {
 
     # pywal takes its accents straight from the wallpaper, so nothing guarantees
     # they are readable against it. Mix each toward the foreground until it
-    # clears AA on the lightest surface, so the result holds for any wallpaper.
+    # clear a 3.0 floor on the lightest surface that is actually used as a
+    # background, keeping hue and saturation intact. The floor is deliberately
+    # below AA: it rescues unreadable wallpapers without repainting good ones.
     local acc_pri acc_sec acc_ter acc_err dim_pri dim_sec dim_ter
-    acc_pri=$(ensure_contrast "$color4" "$s_bright" "$foreground" 4.5)
-    acc_sec=$(ensure_contrast "$color5" "$s_bright" "$foreground" 4.5)
-    acc_ter=$(ensure_contrast "$color6" "$s_bright" "$foreground" 4.5)
-    acc_err=$(ensure_contrast "$color1" "$s_bright" "$foreground" 4.5)
-    dim_pri=$(ensure_contrast "$color12" "$s_bright" "$foreground" 4.5)
-    dim_sec=$(ensure_contrast "$color13" "$s_bright" "$foreground" 4.5)
-    dim_ter=$(ensure_contrast "$color14" "$s_bright" "$foreground" 4.5)
+    acc_pri=$(ensure_contrast "$color4" "$sc_highest" up 3.0)
+    acc_sec=$(ensure_contrast "$color5" "$sc_highest" up 3.0)
+    acc_ter=$(ensure_contrast "$color6" "$sc_highest" up 3.0)
+    acc_err=$(ensure_contrast "$color1" "$sc_highest" up 3.0)
+    dim_pri=$(ensure_contrast "$color12" "$sc_highest" up 3.0)
+    dim_sec=$(ensure_contrast "$color13" "$sc_highest" up 3.0)
+    dim_ter=$(ensure_contrast "$color14" "$sc_highest" up 3.0)
 
     # Containers are backgrounds carrying light on_*_container text, so they
-    # move the other way: toward the background until that text is readable.
+    # get darker instead, until that light text is readable on them.
     local con_pri con_sec con_ter con_err
-    con_pri=$(ensure_contrast "$color4" "$foreground" "$background" 4.5)
-    con_sec=$(ensure_contrast "$color5" "$foreground" "$background" 4.5)
-    con_ter=$(ensure_contrast "$color6" "$foreground" "$background" 4.5)
-    con_err=$(ensure_contrast "$color9" "$foreground" "$background" 4.5)
+    con_pri=$(ensure_contrast "$color4" "$foreground" down 3.0)
+    con_sec=$(ensure_contrast "$color5" "$foreground" down 3.0)
+    con_ter=$(ensure_contrast "$color6" "$foreground" down 3.0)
+    con_err=$(ensure_contrast "$color9" "$foreground" down 3.0)
 
     # Generate theme.toml from pywal colors
     cat > "$theme_file" << EOF
