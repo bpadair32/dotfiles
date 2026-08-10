@@ -4,10 +4,10 @@
  */
 
 @define-color background #0a0f18;
-@define-color error #294F60;
-@define-color error_container #294F60;
+@define-color error #93a0a6;
+@define-color error_container #294f60;
 @define-color inverse_on_surface #0a0f18;
-@define-color inverse_primary #176593;
+@define-color inverse_primary #8ea6b6;
 @define-color inverse_surface #c1c3c5;
 @define-color on_background #c1c3c5;
 @define-color on_error #c1c3c5;
@@ -28,15 +28,15 @@
 @define-color on_tertiary_fixed_variant #0a0f18;
 @define-color outline #59626d;
 @define-color outline_variant #0a0f18;
-@define-color primary #176593;
-@define-color primary_container #176593;
-@define-color primary_fixed #176593;
-@define-color primary_fixed_dim #176593;
+@define-color primary #8ea6b6;
+@define-color primary_container #14537a;
+@define-color primary_fixed #8ea6b6;
+@define-color primary_fixed_dim #8ea6b6;
 @define-color scrim #000000;
-@define-color secondary #51748E;
-@define-color secondary_container #51748E;
-@define-color secondary_fixed #51748E;
-@define-color secondary_fixed_dim #51748E;
+@define-color secondary #94a3af;
+@define-color secondary_container #344b5e;
+@define-color secondary_fixed #94a3af;
+@define-color secondary_fixed_dim #94a3af;
 @define-color shadow #000000;
 @define-color source_color #176593;
 @define-color surface #0a0f18;
@@ -47,16 +47,16 @@
 @define-color surface_container_low #0d121b;
 @define-color surface_container_lowest #0a0f18;
 @define-color surface_dim #0a0f18;
-@define-color surface_tint #176593;
+@define-color surface_tint #8ea6b6;
 @define-color surface_variant #1c2129;
-@define-color tertiary #28A0C1;
-@define-color tertiary_container #28A0C1;
-@define-color tertiary_fixed #28A0C1;
-@define-color tertiary_fixed_dim #28A0C1;
+@define-color tertiary #46a7c1;
+@define-color tertiary_container #19576c;
+@define-color tertiary_fixed #46a7c1;
+@define-color tertiary_fixed_dim #46a7c1;
 
 /* Waybar icon colors */
-@define-color waybar_power #28A0C1;
-@define-color waybar_network #51748E;
-@define-color waybar_apps #176593;
+@define-color waybar_power #46a7c1;
+@define-color waybar_network #94a3af;
+@define-color waybar_apps #8ea6b6;
 @define-color waybar_idle #c1c3c5;
-@define-color waybar_notification #28A0C1;
+@define-color waybar_notification #46a7c1;
