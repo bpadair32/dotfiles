@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(hyprctl clients:*)",
+      "Bash(command grep -n \"zen\" /home/bpadair/repos/dotfiles/waybar/config.jsonc)",
+      "Bash(git pull:*)",
+      "Bash(wl-paste:*)",
+      "Bash(infocmp:*)",
+      "Bash(tmux display-message:*)",
+      "Bash(yazi *)",
+      "Read(//home/bpadair/**)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(rpm *)"
+    ]
+  }
+}

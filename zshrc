@@ -1,10 +1,31 @@
+# XDG base directories
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+
+# Redirect tool config/data/cache to XDG locations
+export CARGO_HOME="$XDG_DATA_HOME/cargo"
+export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
+export AWS_CONFIG_FILE="$XDG_CONFIG_HOME/aws/config"
+export AWS_SHARED_CREDENTIALS_FILE="$XDG_CONFIG_HOME/aws/credentials"
+export ANSIBLE_HOME="$XDG_DATA_HOME/ansible"
+export ANSIBLE_CONFIG="$XDG_CONFIG_HOME/ansible/ansible.cfg"
+export ANSIBLE_GALAXY_CACHE_DIR="$XDG_DATA_HOME/ansible/galaxy_cache"
+export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
+export TASKRC="$XDG_CONFIG_HOME/task/taskrc"
+export TASKDATA="$XDG_DATA_HOME/task"
+export TALOSCONFIG="$XDG_CONFIG_HOME/talos/config"
+export MYSQL_HISTFILE="$XDG_STATE_HOME/mysql/history"
+export LESSHISTFILE="$XDG_STATE_HOME/less/history"
+
 #Bootstrap antidote if we dont already have it
 if [[ ! -d "${ZDOTDIR:-$HOME}/.antidote" ]] then
   git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-$HOME}/.antidote
-fi 
+fi
 
 # Set path
-export PATH=$PATH:~/.local/scripts:~/.local/bin:~/bin:~/.cargo/bin:~/go/bin:$HOME/.krew/bin
+export PATH=$PATH:~/.local/scripts:~/.local/bin:~/bin:$CARGO_HOME/bin:~/go/bin:$HOME/.krew/bin
 
 # Run my greeting script before the instant prompt
 ~/greeting.sh
@@ -22,14 +43,14 @@ source "${ZDOTDIR:-$HOME}/.antidote/antidote.zsh"
 antidote load "${ZDOTDIR:-$HOME}/.zsh_plugins.txt"
 
 export EDITOR="nvim"
-export KUBECONFIG=~/.kube/homelab.yaml
+export KUBECONFIG="$XDG_CONFIG_HOME/kube/homelab.yaml"
 
-# Load zsh completions
-autoload -U compinit && compinit
+# Load zsh completions (cache compdump under XDG_CACHE_HOME)
+autoload -U compinit && compinit -d "$XDG_CACHE_HOME/zsh/zcompdump"
 
 # Setup history
 HISTSIZE=5000
-HISTFILE=~/.zsh_history
+HISTFILE="$XDG_STATE_HOME/zsh/history"
 SAVEHIST=$HISTSIZE
 HISTDUP=erase
 setopt appendhistory
@@ -75,4 +96,41 @@ source ~/functions.sh
 
 # opencode
 export PATH=/home/bpadair/.opencode/bin:$PATH
+
+# Run a throwaway debug pod that satisfies PodSecurity "restricted".
+# Usage: kdebug [image] [namespace]
+#   kdebug                          # busybox in current namespace
+#   kdebug nicolaka/netshoot        # netshoot
+#   kdebug busybox mynamespace      # busybox in mynamespace
+kdebug() {
+  local image="${1:-busybox}"
+  local ns="${2:-}"
+  local name="debug-${image##*/}"
+  name="${name%%:*}"
+  local nsflag=()
+  [[ -n "$ns" ]] && nsflag=(-n "$ns")
+
+  kubectl run -it --rm "$name" --image="$image" --restart=Never "${nsflag[@]}" \
+    --override-type=strategic \
+    --overrides="{
+      \"spec\": {
+        \"securityContext\": {
+          \"runAsNonRoot\": true,
+          \"runAsUser\": 1000,
+          \"seccompProfile\": {\"type\": \"RuntimeDefault\"}
+        },
+        \"containers\": [{
+          \"name\": \"$name\",
+          \"image\": \"$image\",
+          \"stdin\": true,
+          \"tty\": true,
+          \"args\": [\"sh\"],
+          \"securityContext\": {
+            \"allowPrivilegeEscalation\": false,
+            \"capabilities\": {\"drop\": [\"ALL\"]}
+          }
+        }]
+      }
+    }" -- sh
+}
 

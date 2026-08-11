@@ -35,3 +35,6 @@
 [filter "gitignore"]
 	clean = "sed '/#gitignore$/d'"
 	smudge = cat
+[credential "https://gitlab.com"]
+	helper = 
+	helper = !/usr/bin/glab auth git-credential
