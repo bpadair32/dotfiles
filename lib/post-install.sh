@@ -13,6 +13,7 @@ post_install() {
     enable_services
     install_sudoers
     create_monitors_template
+    install_termfilechooser
     apply_default_theme
 
     mark_phase_done "post-install"
@@ -137,6 +138,64 @@ EOF
 
     log_success "  monitors.conf template created"
     log_info "  Edit ~/.config/hypr/configs/monitors.conf to configure your displays"
+}
+
+install_termfilechooser() {
+    log_step "Installing xdg-desktop-portal-termfilechooser..."
+
+    if [[ -x /usr/libexec/xdg-desktop-portal-termfilechooser ]]; then
+        log_info "  xdg-desktop-portal-termfilechooser already installed"
+        return 0
+    fi
+
+    local deps_missing=false
+    for dep in meson ninja gcc pkg-config; do
+        if ! command -v "$dep" &>/dev/null; then
+            log_warn "  Missing build dependency: $dep"
+            deps_missing=true
+        fi
+    done
+    if ! pkg-config --exists inih 2>/dev/null; then
+        log_step "  Installing inih-devel..."
+        sudo dnf install -y inih-devel &>>"$LOG_FILE" || { log_warn "  Failed to install inih-devel"; deps_missing=true; }
+    fi
+    if $deps_missing; then
+        log_warn "  Skipping termfilechooser install — missing build deps"
+        return 1
+    fi
+
+    local build_dir
+    build_dir=$(mktemp -d)
+    log_step "  Cloning into $build_dir..."
+    if ! git clone --depth=1 https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser.git "$build_dir" &>>"$LOG_FILE"; then
+        log_warn "  Failed to clone xdg-desktop-portal-termfilechooser"
+        rm -rf "$build_dir"
+        return 1
+    fi
+
+    log_step "  Building..."
+    if ! meson setup "$build_dir/build" "$build_dir" --prefix=/usr &>>"$LOG_FILE"; then
+        log_warn "  meson setup failed"
+        rm -rf "$build_dir"
+        return 1
+    fi
+    if ! ninja -C "$build_dir/build" &>>"$LOG_FILE"; then
+        log_warn "  ninja build failed"
+        rm -rf "$build_dir"
+        return 1
+    fi
+
+    log_step "  Installing (requires sudo)..."
+    if sudo ninja -C "$build_dir/build" install &>>"$LOG_FILE"; then
+        log_success "  xdg-desktop-portal-termfilechooser installed"
+    else
+        log_warn "  Install failed"
+        rm -rf "$build_dir"
+        return 1
+    fi
+
+    rm -rf "$build_dir"
+    systemctl --user restart xdg-desktop-portal.service &>>"$LOG_FILE" || true
 }
 
 apply_default_theme() {

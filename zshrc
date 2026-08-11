@@ -20,12 +20,12 @@ export MYSQL_HISTFILE="$XDG_STATE_HOME/mysql/history"
 export LESSHISTFILE="$XDG_STATE_HOME/less/history"
 
 #Bootstrap antidote if we dont already have it
-if [[ ! -d "${ZDOTDIR:-$HOME}/.antidote" ]] then
-  git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-$HOME}/.antidote
+if [[ ! -d "${ANTIDOTE_HOME:-$HOME/.local/share/antidote}" ]] then
+  git clone --depth=1 https://github.com/mattmc3/antidote.git "${ANTIDOTE_HOME:-$HOME/.local/share/antidote}"
 fi
 
 # Set path
-export PATH=$PATH:~/.local/scripts:~/.local/bin:~/bin:$CARGO_HOME/bin:~/go/bin:$HOME/.krew/bin
+export PATH=$PATH:~/.local/scripts:~/.local/bin:~/bin:${CARGO_HOME:-$HOME/.local/share/cargo}/bin:~/go/bin:${KREW_ROOT:-$HOME/.local/share/krew}/bin:${BUN_INSTALL:-$HOME/.local/bun}/bin
 
 # Run my greeting script before the instant prompt
 ~/greeting.sh
@@ -36,21 +36,21 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # Source the p10k config
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+[[ ! -f "${ZDOTDIR:-$HOME}/.p10k.zsh" ]] || source "${ZDOTDIR:-$HOME}/.p10k.zsh"
 
 # Init antidote and load plugins
-source "${ZDOTDIR:-$HOME}/.antidote/antidote.zsh"
-antidote load "${ZDOTDIR:-$HOME}/.zsh_plugins.txt"
+source "${ANTIDOTE_HOME:-$HOME/.local/share/antidote}/antidote.zsh"
+antidote load "${ZDOTDIR:-$HOME/.config/zsh}/zsh_plugins.txt"
 
 export EDITOR="nvim"
 export KUBECONFIG="$XDG_CONFIG_HOME/kube/homelab.yaml"
 
-# Load zsh completions (cache compdump under XDG_CACHE_HOME)
-autoload -U compinit && compinit -d "$XDG_CACHE_HOME/zsh/zcompdump"
+# Load zsh completions
+autoload -U compinit && compinit -d "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 
 # Setup history
 HISTSIZE=5000
-HISTFILE="$XDG_STATE_HOME/zsh/history"
+HISTFILE="${XDG_STATE_HOME:-$HOME/.local/state}/zsh/history"
 SAVEHIST=$HISTSIZE
 HISTDUP=erase
 setopt appendhistory
@@ -134,3 +134,10 @@ kdebug() {
     }" -- sh
 }
 
+# Guarded: fb had dropped this line, main kept it, so only run it where
+# linuxbrew is actually installed.
+[ -x /home/linuxbrew/.linuxbrew/bin/brew ] && \
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
+
+# bun completions
+[ -s "${BUN_INSTALL:-$HOME/.local/bun}/_bun" ] && source "${BUN_INSTALL:-$HOME/.local/bun}/_bun"

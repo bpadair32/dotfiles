@@ -48,6 +48,26 @@ theme-switch --save my-theme
 
 Themes are defined in `themes/<name>/theme.toml` using Material Design 3 color tokens. Templates in `templates/` are processed with envsubst to generate app-specific color configs.
 
+All three sources (static, pywal, matugen) converge on the same `theme.toml`
+format and run through `apply_theme`, so they reach identical targets. Matugen's
+config in `matugen/` holds exactly one template, which writes that `theme.toml`;
+it does not generate app configs directly.
+
+Theme targets: Hyprland (+hyprlock), waybar, wlogout, swaync, dunst, kitty,
+rofi, GTK3/GTK4, Qt via qt5ct/qt6ct, KDE apps via `kdeglobals`, SDDM, Neovim
+(colorscheme name only), btop, tmux, lazygit, k9s, yazi, rmpc, Firefox and Zen
+(userChrome/userContent), and Obsidian (CSS snippet per vault).
+
+Zen needs `templates/zen-colors.css.tmpl` appended after the shared Firefox
+rules: it redefines the standard chrome variables with `!important`, but derives
+its whole palette from `--zen-primary-color` and `--zen-branding-dark`, so those
+two are what to set. Its accent also lives in a pref (`zen.theme.accent-color`),
+written to the profile's `user.js`.
+
+Color files (`hypr/colors.conf`, `waybar/colors.css`, etc.) are generated -
+edit themes, not the color files. `lazygit/config.yml` is fully generated too;
+add lazygit settings to `templates/lazygit-config.yml.tmpl`.
+
 ## Architecture
 
 ### Directory Structure

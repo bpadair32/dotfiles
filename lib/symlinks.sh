@@ -4,10 +4,10 @@
 # Define symlink mappings (source -> target)
 # Source is relative to DOTFILES_DIR, target is absolute
 declare -A SYMLINK_MAP=(
-    # Home directory files
-    ["zshrc"]="${HOME}/.zshrc"
-    ["zsh_plugins.txt"]="${HOME}/.zsh_plugins.txt"
-    ["p10k.zsh"]="${HOME}/.p10k.zsh"
+    # Zsh config (in ZDOTDIR)
+    ["zshrc"]="${HOME}/.config/zsh/.zshrc"
+    ["zsh_plugins.txt"]="${HOME}/.config/zsh/zsh_plugins.txt"
+    ["p10k.zsh"]="${HOME}/.config/zsh/.p10k.zsh"
     ["alias.sh"]="${HOME}/alias.sh"
     ["functions.sh"]="${HOME}/functions.sh"
     ["greeting.sh"]="${HOME}/greeting.sh"
@@ -26,6 +26,10 @@ declare -A SYMLINK_MAP=(
     ["lazygit"]="${HOME}/.config/lazygit"
     ["neofetch"]="${HOME}/.config/neofetch"
     ["matugen"]="${HOME}/.config/matugen"
+
+    # XDG portal config
+    ["xdg-desktop-portal"]="${HOME}/.config/xdg-desktop-portal"
+    ["xdg-desktop-portal-termfilechooser"]="${HOME}/.config/xdg-desktop-portal-termfilechooser"
 
     # Other directories
     ["tmux"]="${HOME}/.tmux"

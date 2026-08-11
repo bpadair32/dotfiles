@@ -190,7 +190,7 @@
   "custom/updates": {
     "format": "{}",
     "return-type": "json",
-    "interval": 7200,
+    "interval": 1800,
     "exec": "~/repos/dotfiles/scripts/updates",
     "on-click": "kitty --class floating -e bash -c 'echo \"=== DNF Updates ===\"; dnf check-update; echo; echo \"=== Flatpak Updates ===\"; flatpak remote-ls --updates; read -p \"Press Enter to close...\"'",
     "tooltip": true
