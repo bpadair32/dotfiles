@@ -1,39 +1,15 @@
-[config.wallpaper]
-command = "swww"
-arguments = [
-  "img",
-  "--transition-type",
-  "center",
-  "--transition-step",
-  "1",
-  "--transition-fps",
-  "60",
-]
-set = true
+# matugen is used only to turn a wallpaper into a Material You palette.
+# It writes that palette out as a theme.toml in the same format as the
+# static themes, and theme-switch then runs it through the normal
+# apply_theme pipeline. Keeping a second set of matugen-specific
+# templates here is what previously left matugen themes missing GTK, Qt,
+# dunst, SDDM and Neovim.
 
-[templates.hyprland]
-input_path = "./templates/hyprland-colors.conf"
-output_path = "~/.config/hypr/colors.conf"
-post_hook = 'hyprctl reload'
+# [config] must be present even when empty. There is deliberately no
+# [config.wallpaper] here: theme-switch sets the wallpaper itself from the
+# wallpaper key in the generated theme.toml.
+[config]
 
-[templates.waybar]
-input_path = "./templates/colors.css"
-output_path = "~/.config/waybar/colors.css"
-post_hook = "pkill -SIGUSR2 waybar"
-
-[templates.kitty]
-input_path = "./templates/kitty-colors.conf"
-output_path = "~/.config/kitty/current-theme.conf"
-
-[templates.wlogout]
-input_path = "./templates/colors.css"
-output_path = "~/.config/wlogout/colors.css"
-
-[templates.rofi]
-input_path = "./templates/rofi-colors.rasi"
-output_path = "~/.config/rofi/colors.rasi"
-
-[templates.swaync]
-input_path = "./templates/colors.css"
-output_path = "~/.config/swaync/colors.css"
-post_hook = "swaync-client --reload-css"
+[templates.theme]
+input_path = "./templates/theme.toml"
+output_path = "~/repos/dotfiles/themes/_dynamic/matugen/theme.toml"
