@@ -90,7 +90,7 @@ tooltip label {
 }
 
 #clock {
-    background: @surface_container_high;
+    background: @surface_container;
     border-radius: 8px;
     margin: 4px 6px;
     padding: 0 12px;
