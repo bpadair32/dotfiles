@@ -5,6 +5,7 @@
 # Source is relative to DOTFILES_DIR, target is absolute
 declare -A SYMLINK_MAP=(
     # Zsh config (in ZDOTDIR)
+    ["zshenv"]="${HOME}/.zshenv"
     ["zshrc"]="${HOME}/.config/zsh/.zshrc"
     ["zsh_plugins.txt"]="${HOME}/.config/zsh/zsh_plugins.txt"
     ["p10k.zsh"]="${HOME}/.config/zsh/.p10k.zsh"
